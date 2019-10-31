@@ -182,8 +182,6 @@ class WorldNode implements WeightedVertex {
             let createdNeighbour = new WorldNode((Math.random() * 100000).toString(), [], worldState);
             this.edges.push(new SimpleEdge(this, createdNeighbour, 1));
         });
-
-        console.log(this.edges);
     }
 
     addEdge(neighbour: WorldNode, cost: number) {
@@ -267,8 +265,6 @@ class SimpleWorld {
     }
 
     private getRoom(x: number, y: number) {
-        console.log(x);
-        console.log(y);
         return this.map[y][x];
     }
 }
@@ -427,5 +423,20 @@ console.log(printPath(shortestPath(node1b, node6b)));
 let basicWorld = new SimpleWorld([['r', 'x', 'x'],['r', 'r', 'r'],['r', 'x', 'r'], ['r', 'x', 'r'], ['x', 'x', 'r']], {x: 0, y: 0});
 let startNode = new WorldNode('a', [], basicWorld);
 let goalNode = new WorldNode('b', [], new SimpleWorld([], {x: 2, y: 4}));
-console.log(basicWorld);
 console.log(printWorldPath(shortestPath(startNode, goalNode)));
+
+let world = [
+    ['r','r','r','r','r'],
+    ['r','x','x','x','r'],
+    ['r','r','r','x','r'],
+    ['x','x','r','x','r'],
+    ['x','x','r','r','r']
+]
+
+let lessBasicWorld = new SimpleWorld(world, {x:2, y:2});
+let lessBasicStartNode = new WorldNode('a', [], lessBasicWorld);
+let goalOne = new WorldNode('b', [], new SimpleWorld([], {x:0, y:0}));
+let goalTwo = new WorldNode('b', [], new SimpleWorld([], {x:4, y:1}));
+
+console.log(printWorldPath(shortestPath(lessBasicStartNode, goalOne)));
+console.log(printWorldPath(shortestPath(lessBasicStartNode, goalTwo)));
