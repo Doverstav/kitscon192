@@ -354,6 +354,20 @@ function printPath(path: Edge []) {
     return stringPath;
 }
 
+function printWorldPath(path: Edge[]) {
+    let stringPath = "";
+    for(let i = 0; i < path.length; i++) {
+        let from = (path[i].from as WorldNode);
+
+        stringPath = stringPath.concat(`{ x: ${from.worldState.position.x}, y: ${from.worldState.position.y} } -${path[i].cost}-> `);
+        if(i === path.length - 1) {
+            let to = (path[i].to as WorldNode);
+            stringPath = stringPath.concat(`{ x: ${to.worldState.position.x}, y: ${to.worldState.position.y} }`);
+        }
+    }
+    return stringPath;
+}
+
 let node1 = new WeightedNode('1', []);
 let node2 = new WeightedNode('2', []);
 let node3 = new WeightedNode('3', []);
@@ -410,8 +424,8 @@ let graphb = new WeightedGraph([node1b, node2b, node3b, node4b, node5b, node6b])
 console.log(graphb.toString());
 console.log(printPath(shortestPath(node1b, node6b)));
 
-let basicWorld = new SimpleWorld([['r', 'x', 'x'],['r', 'r', 'r'],['x', 'x', 'r'], ['x', 'x', 'r'], ['x', 'x', 'r']], {x: 0, y: 0});
+let basicWorld = new SimpleWorld([['r', 'x', 'x'],['r', 'r', 'r'],['r', 'x', 'r'], ['r', 'x', 'r'], ['x', 'x', 'r']], {x: 0, y: 0});
 let startNode = new WorldNode('a', [], basicWorld);
 let goalNode = new WorldNode('b', [], new SimpleWorld([], {x: 2, y: 4}));
 console.log(basicWorld);
-console.log(printPath(shortestPath(startNode, goalNode)));
+console.log(printWorldPath(shortestPath(startNode, goalNode)));
