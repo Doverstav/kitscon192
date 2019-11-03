@@ -189,8 +189,7 @@ class WorldNode implements WeightedVertex {
     }
 
     equals(toCompare: WorldNode) {
-        return this.worldState.position.x === toCompare.worldState.position.x
-                && this.worldState.position.y === toCompare.worldState.position.y;
+        return this.worldState.equals(toCompare.worldState);
     }
 }
 
@@ -266,6 +265,11 @@ class SimpleWorld {
 
     private getRoom(x: number, y: number) {
         return this.map[y][x];
+    }
+
+    equals(toCompare: SimpleWorld) {
+        return this.position.x === toCompare.position.x
+                && this.position.y === toCompare.position.y;
     }
 }
 
