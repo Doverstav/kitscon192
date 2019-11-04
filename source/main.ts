@@ -274,13 +274,290 @@ class SimpleWorld {
 }
 
 class Room {
-    contents: any;
-    connections: {
-        room: Room,
-        connectionType: any,
-        direction: any
-    } []
+    name: string;
+    contents: ObjectType;
+    connections: Connection [];
+
+    constructor(name: string, contents: ObjectType, connections: Connection []) {
+        this.name = name;
+        this.contents = contents;
+        this.connections = [];
+        connections.forEach(
+            connection => this.connections.push(new Connection(connection.room, connection.connectionType, connection.direction))
+        );
+    }
+
+    equals(otherRoom: Room) {
+        return this.name === otherRoom.name;
+    }
 }
+
+class Connection {
+    room: Room;
+    connectionType: ConnectionType;
+    direction: Direction;
+
+    constructor(room: Room, connectionType: ConnectionType, direction: Direction) {
+        this.room = room;
+        this.connectionType = connectionType;
+        this.direction = direction;
+    }
+}
+
+enum ObjectType {
+    KEY = "Key", 
+    ORB = "Orb",
+    NOTHING = "Nothing"
+};
+
+enum Direction {
+    NORTH = "North",
+    WEST = "West",
+    SOUTH = "South",
+    EAST = "East"
+}
+
+enum ConnectionType {
+    DOOR = "Door",
+    HALLWAY = "Hallway"
+}
+
+class MapObject {
+    type: ObjectType;
+
+    constructor(type: ObjectType) {
+        this.type = type;
+    }
+}
+
+class Robot implements WeightedNode {
+    id: string;
+    edges: Edge[];
+
+    // Robot can hold one object at a time
+    holding: ObjectType;
+    location: Room
+
+    constructor(toHold: ObjectType, location: Room) {
+        this.holding = toHold;
+        this.location = location;
+        this.edges = [];
+    }
+
+    moveRobot() {
+        // Go to adjacent rooms
+        this.location.connections.forEach(
+            (connection, index) => {
+                // If hallway, just go to adjacent room
+                if(connection.connectionType === ConnectionType.HALLWAY) {
+                    console.log("Going through hallway");
+                    let newRobot = new Robot(this.holding, connection.room);
+                    this.addEdge(newRobot, 1);
+                }
+
+                // If there is a door and we have a key we can open it
+                if(connection.connectionType === ConnectionType.DOOR
+                    && this.holding === ObjectType.KEY) {
+                        console.log("Open door with key")
+                        
+                        // Create new copy of room we are leaving with connection as Hallway
+                        let updatedRoom = new Room(
+                            this.location.name,
+                            this.location.contents,
+                            this.location.connections
+                        )
+                        // Copy connection and update connections in new room copy
+                        let connectionCopy = new Connection(connection.room, ConnectionType.HALLWAY, connection.direction);
+                        updatedRoom.connections[index] = connectionCopy;
+
+                        // Update connection in destination room
+                        connectionCopy.room.connections.forEach(
+                            (otherConnection, index) => {
+                                // We have found the connection from the other side 
+                                // leading back here
+                                if(otherConnection.room.name === this.location.name) {
+                                    // Copy connection and set new
+                                    let updatedConnection = new Connection(otherConnection.room, ConnectionType.HALLWAY, otherConnection.direction);
+                                    connection.room.connections[index] = updatedConnection;
+                                }
+                            }
+                        )
+
+                        // Move robot
+                        let newRobot = new Robot(ObjectType.NOTHING, connectionCopy.room);
+                        this.addEdge(newRobot, 1);
+
+                }
+
+                // If there is a door but no key, we can force it
+                if(connection.connectionType === ConnectionType.DOOR
+                    && this.holding === ObjectType.NOTHING) {
+                    console.log("Force door")
+
+                    // Create new copy of room we are leaving with connection as Hallway
+                    let updatedRoom = new Room(
+                        this.location.name,
+                        this.location.contents,
+                        this.location.connections
+                    )
+                    // Copy connection and update connections in new room copy
+                    let connectionCopy = new Connection(connection.room, ConnectionType.HALLWAY, connection.direction);
+                    updatedRoom.connections[index] = connectionCopy;
+
+                    // Update connection in destination room
+                    connectionCopy.room.connections.forEach(
+                        (otherConnection, index) => {
+                            // We have found the connection from the other side 
+                            // leading back here
+                            if(otherConnection.room.name === this.location.name) {
+                                // Copy connection and set new
+                                let updatedConnection = new Connection(otherConnection.room, ConnectionType.HALLWAY, otherConnection.direction);
+                                connection.room.connections[index] = updatedConnection;
+                            }
+                        }
+                    )
+                    
+                    // Move robot
+                    let newRobot = new Robot(this.holding, connection.room);
+                    this.addEdge(newRobot, 10);
+                }
+            }
+        )
+
+        // Pick up object
+        if(this.holding === ObjectType.NOTHING && this.location.contents !== ObjectType.NOTHING) {
+            console.log("Pick up object")
+            // remove object from room
+            let updatedRoom = new Room(
+                this.location.name, 
+                ObjectType.NOTHING, 
+                this.location.connections
+            );
+            // Create new robot
+            let newRobot = new Robot(ObjectType.KEY, updatedRoom);
+            // Create edge
+            this.addEdge(newRobot, 1);
+        }
+
+        // Drop object
+        // Can only drop if room is currently empty
+        if(this.holding !== ObjectType.NOTHING && this.location.contents === ObjectType.NOTHING) {
+            console.log("Drop object")
+            // Put object in room
+            let updatedRoom = new Room(
+                this.location.name,
+                this.holding,
+                this.location.connections
+            )
+            // Create new robot
+            let newRobot = new Robot(ObjectType.NOTHING, updatedRoom);
+            // Create edge
+            this.addEdge(newRobot, 1);
+        }
+    }
+
+    addEdge(neighbour: Robot, cost: number): void {
+        console.log('adding')
+        this.edges.push(new SimpleEdge(this, neighbour, cost));
+    }
+
+    getEdges(): Edge[] {
+        if(this.edges.length === 0) {
+            this.moveRobot();
+        }
+
+        return this.edges;
+    }
+
+    toString() {
+        let stringRepresentation = "";
+        stringRepresentation = stringRepresentation.concat(`Name: ${this.location.name}\nHolding: ${this.holding}\n`)
+        this.location.connections.forEach(
+            connection => {
+                stringRepresentation = stringRepresentation.concat(`{\n\t${connection.room.name}\n\t${connection.connectionType}\n\t${connection.direction}\n}\n`)
+            }
+        );
+        this.edges.forEach(
+            edge => {
+                stringRepresentation = stringRepresentation.concat(`${(edge.from as Robot).location.name} -${edge.cost}-> ${(edge.to as Robot).location.name}\n`)
+            }
+        )
+
+        return stringRepresentation;
+    }
+
+    equals(toCompare: Robot): boolean {
+        throw new Error("Method not implemented.");
+    }
+}
+
+/*
+class World {
+    // Current room is the room that the robot is currently in
+    robot: Robot;
+    //rooms: Room [];
+
+    constructor(robot: Robot) {
+        this.robot = robot
+    }
+
+    generateValidNextStates(): World [] {
+        let nextStates = [];
+        let currentRoom = this.robot.location;
+
+        // Go to adjacent rooms
+        currentRoom.connections.forEach(
+            connection => {
+
+            }
+        )
+
+        // Pick up objects
+        // Can onlt pick up if robot is not holding an object
+        if(!this.robot.holding) {
+            currentRoom.contents.forEach(
+                (object, index) => {
+                    // Robot picks up object
+                    let objectToPickup = object;
+                    // Create new room where object is picked up by robot
+                    let copiedContents = [...currentRoom.contents];
+                    copiedContents.slice(index, index + 1);
+                    let updatedRoom = {
+                        ...currentRoom,
+                        contents: [
+                            ...copiedContents
+                        ]
+                    }
+                    // Create new robot in new location and holding object
+                    let newRobot = new Robot(objectToPickup, updatedRoom);
+
+                    nextStates.push(new World(newRobot));
+                }
+            )
+        }
+
+        // Drop objects
+        if(this.robot.holding) {
+            // Drop object in room
+            let updateRoom = {
+                ...this.robot.location,
+                contents: [
+                    ...this.robot.location.contents,
+                    this.robot.location
+                ]
+            }
+            // Create new robot with no object
+            let newRobot = 
+        }
+
+        return nextStates;
+    }
+
+    equals() {
+        return true;
+    }
+}
+*/
 
 function shortestPath(start: WeightedVertex, end: WeightedVertex) {
     let allPaths: (Edge []) [] = [];
@@ -444,3 +721,71 @@ let goalTwo = new WorldNode('b', [], new SimpleWorld([], {x:4, y:1}));
 
 console.log(printWorldPath(shortestPath(lessBasicStartNode, goalOne)));
 console.log(printWorldPath(shortestPath(lessBasicStartNode, goalTwo)));
+
+
+let room1: Room = new Room(
+    'a',
+    ObjectType.NOTHING,
+    []
+)
+
+let room2: Room = new Room(
+    'b',
+    ObjectType.KEY,
+    []
+)
+
+let room3: Room = new Room(
+    'c',
+    ObjectType.NOTHING,
+    []
+)
+
+room1.connections = [
+    {
+        room: room2,
+        connectionType: ConnectionType.DOOR,
+        direction: Direction.EAST
+    } 
+];
+
+room2.connections = [
+    {
+        room: room1,
+        connectionType: ConnectionType.DOOR,
+        direction: Direction.WEST
+    },
+    {
+        room: room3,
+        connectionType: ConnectionType.DOOR,
+        direction: Direction.NORTH
+    }
+];
+
+room3.connections = [
+    {
+        room: room2,
+        connectionType: ConnectionType.DOOR,
+        direction: Direction.SOUTH
+    }
+]
+
+console.log(room1);
+console.log(room2);
+
+let testRobot = new Robot(ObjectType.NOTHING, room1);
+
+let firstMove = testRobot.getEdges()
+firstMove.forEach(
+    edge => console.log((edge.to as Robot).toString())
+)
+
+let secondMove = firstMove[0].to.getEdges();
+secondMove.forEach(
+    edge => console.log((edge.to as Robot).toString())
+)
+
+let thirdMove = secondMove[2].to.getEdges();
+thirdMove.forEach(
+    edge => console.log((edge.to as Robot).toString())
+)
