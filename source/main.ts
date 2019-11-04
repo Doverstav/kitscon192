@@ -350,7 +350,6 @@ class Robot implements WeightedNode {
             (connection, index) => {
                 // If hallway, just go to adjacent room
                 if(connection.connectionType === ConnectionType.HALLWAY) {
-                    console.log("Going through hallway");
                     let newRobot = new Robot(this.holding, connection.room);
                     this.addEdge(newRobot, 1);
                 }
@@ -358,7 +357,6 @@ class Robot implements WeightedNode {
                 // If there is a door and we have a key we can open it
                 if(connection.connectionType === ConnectionType.DOOR
                     && this.holding === ObjectType.KEY) {
-                        console.log("Open door with key")
                         
                         // Create new copy of room we are leaving with connection as Hallway
                         let updatedRoom = new Room(
@@ -392,7 +390,6 @@ class Robot implements WeightedNode {
                 // If there is a door but no key, we can force it
                 if(connection.connectionType === ConnectionType.DOOR
                     && this.holding === ObjectType.NOTHING) {
-                    console.log("Force door")
 
                     // Create new copy of room we are leaving with connection as Hallway
                     let updatedRoom = new Room(
@@ -426,7 +423,6 @@ class Robot implements WeightedNode {
 
         // Pick up object
         if(this.holding === ObjectType.NOTHING && this.location.contents !== ObjectType.NOTHING) {
-            console.log("Pick up object")
             // remove object from room
             let updatedRoom = new Room(
                 this.location.name, 
@@ -442,7 +438,6 @@ class Robot implements WeightedNode {
         // Drop object
         // Can only drop if room is currently empty
         if(this.holding !== ObjectType.NOTHING && this.location.contents === ObjectType.NOTHING) {
-            console.log("Drop object")
             // Put object in room
             let updatedRoom = new Room(
                 this.location.name,
@@ -457,7 +452,6 @@ class Robot implements WeightedNode {
     }
 
     addEdge(neighbour: Robot, cost: number): void {
-        console.log('adding')
         this.edges.push(new SimpleEdge(this, neighbour, cost));
     }
 
@@ -489,7 +483,7 @@ class Robot implements WeightedNode {
     equals(toCompare: Robot): boolean {
         // Robots are equal of they are in the same room
         // If holding is specified, it must also be equal
-        return this.location.name === toCompare.location.name
+        return (toCompare.location ? this.location.name === toCompare.location.name : true)
                 && (toCompare.holding ? this.holding === toCompare.holding : true);
     }
 }
@@ -682,6 +676,18 @@ let room4: Room = new Room(
     []
 )
 
+let room5: Room = new Room(
+    'e',
+    ObjectType.NOTHING,
+    []
+)
+
+let room6: Room = new Room(
+    'f',
+    ObjectType.ORB,
+    []
+)
+
 room1.connections = [
     {
         room: room2,
@@ -700,6 +706,16 @@ room2.connections = [
         room: room3,
         connectionType: ConnectionType.DOOR,
         direction: Direction.NORTH
+    },
+    {
+        room: room4,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.SOUTH
+    },
+    {
+        room: room5,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.EAST
     }
 ];
 
@@ -711,10 +727,44 @@ room3.connections = [
     }
 ]
 
-console.log(room1);
-console.log(room2);
+room4.connections = [
+    {
+        room: room2,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.NORTH
+    }
+]
+
+room5.connections = [
+    {
+        room: room2,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.WEST
+    },
+    {
+        room: room6,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.EAST
+    }
+]
+
+room6.connections = [
+    {
+        room: room5,
+        connectionType: ConnectionType.HALLWAY,
+        direction: Direction.WEST
+    }
+]
 
 let testRobot = new Robot(ObjectType.NOTHING, room1);
-let endRobot = new Robot(ObjectType.NOTHING, room3);
+let endRobot = new Robot(undefined, room4);
+
+let testRobot1 = new Robot(ObjectType.NOTHING, room1);
+let endRobot1 = new Robot(ObjectType.ORB, undefined);
+
+let testRobot2 = new Robot(ObjectType.NOTHING, room1);
+let endRobot2 = new Robot(ObjectType.ORB, room6);
 
 console.log(shortestPath(testRobot, endRobot));
+console.log(shortestPath(testRobot1, endRobot1));
+console.log(shortestPath(testRobot2, endRobot2));
