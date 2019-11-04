@@ -434,7 +434,7 @@ class Robot implements WeightedNode {
                 this.location.connections
             );
             // Create new robot
-            let newRobot = new Robot(ObjectType.KEY, updatedRoom);
+            let newRobot = new Robot(this.location.contents, updatedRoom);
             // Create edge
             this.addEdge(newRobot, 1);
         }
@@ -487,77 +487,12 @@ class Robot implements WeightedNode {
     }
 
     equals(toCompare: Robot): boolean {
-        throw new Error("Method not implemented.");
+        // Robots are equal of they are in the same room
+        // If holding is specified, it must also be equal
+        return this.location.name === toCompare.location.name
+                && (toCompare.holding ? this.holding === toCompare.holding : true);
     }
 }
-
-/*
-class World {
-    // Current room is the room that the robot is currently in
-    robot: Robot;
-    //rooms: Room [];
-
-    constructor(robot: Robot) {
-        this.robot = robot
-    }
-
-    generateValidNextStates(): World [] {
-        let nextStates = [];
-        let currentRoom = this.robot.location;
-
-        // Go to adjacent rooms
-        currentRoom.connections.forEach(
-            connection => {
-
-            }
-        )
-
-        // Pick up objects
-        // Can onlt pick up if robot is not holding an object
-        if(!this.robot.holding) {
-            currentRoom.contents.forEach(
-                (object, index) => {
-                    // Robot picks up object
-                    let objectToPickup = object;
-                    // Create new room where object is picked up by robot
-                    let copiedContents = [...currentRoom.contents];
-                    copiedContents.slice(index, index + 1);
-                    let updatedRoom = {
-                        ...currentRoom,
-                        contents: [
-                            ...copiedContents
-                        ]
-                    }
-                    // Create new robot in new location and holding object
-                    let newRobot = new Robot(objectToPickup, updatedRoom);
-
-                    nextStates.push(new World(newRobot));
-                }
-            )
-        }
-
-        // Drop objects
-        if(this.robot.holding) {
-            // Drop object in room
-            let updateRoom = {
-                ...this.robot.location,
-                contents: [
-                    ...this.robot.location.contents,
-                    this.robot.location
-                ]
-            }
-            // Create new robot with no object
-            let newRobot = 
-        }
-
-        return nextStates;
-    }
-
-    equals() {
-        return true;
-    }
-}
-*/
 
 function shortestPath(start: WeightedVertex, end: WeightedVertex) {
     let allPaths: (Edge []) [] = [];
@@ -741,6 +676,12 @@ let room3: Room = new Room(
     []
 )
 
+let room4: Room = new Room(
+    'd',
+    ObjectType.ORB,
+    []
+)
+
 room1.connections = [
     {
         room: room2,
@@ -774,18 +715,6 @@ console.log(room1);
 console.log(room2);
 
 let testRobot = new Robot(ObjectType.NOTHING, room1);
+let endRobot = new Robot(ObjectType.NOTHING, room3);
 
-let firstMove = testRobot.getEdges()
-firstMove.forEach(
-    edge => console.log((edge.to as Robot).toString())
-)
-
-let secondMove = firstMove[0].to.getEdges();
-secondMove.forEach(
-    edge => console.log((edge.to as Robot).toString())
-)
-
-let thirdMove = secondMove[2].to.getEdges();
-thirdMove.forEach(
-    edge => console.log((edge.to as Robot).toString())
-)
+console.log(shortestPath(testRobot, endRobot));
