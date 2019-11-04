@@ -768,3 +768,12 @@ let endRobot2 = new Robot(ObjectType.ORB, room6);
 console.log(shortestPath(testRobot, endRobot));
 console.log(shortestPath(testRobot1, endRobot1));
 console.log(shortestPath(testRobot2, endRobot2));
+
+let severalMovesWithOneRobot = new Robot(ObjectType.NOTHING, room1);
+let firstGoal = new Robot(undefined, room3);
+let secondGoal = new Robot(undefined, room6);
+
+let firstPath = shortestPath(severalMovesWithOneRobot, firstGoal);
+let secondPath = shortestPath(firstPath[firstPath.length - 1].to, secondGoal);
+console.log(firstPath);
+console.log(secondPath);
