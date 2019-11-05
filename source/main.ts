@@ -498,7 +498,7 @@ class Robot implements WeightedNode {
         if(toCompare.holding) {
             holdingIsSignificant = this.holding === toCompare.holding;
         }
-        
+
         return locationIsSignificant 
                 && holdingIsSignificant
                 && roomContentsIsSignificant;
@@ -798,3 +798,193 @@ let firstPath = shortestPath(severalMovesWithOneRobot, firstGoal);
 let secondPath = shortestPath(firstPath[firstPath.length - 1].to, secondGoal);
 console.log(firstPath);
 console.log(secondPath);
+
+function createRoomGrid(initialRoom: Room) {
+    // Keep track of max/min indexes so we can normalize them later
+    let smallestX = 0;
+    let largestX = 0;
+    let smallestY = 0;
+    let largestY = 0;
+
+    // Set starting room as origo
+    let processedRooms = [{x: 0, y: 0, room: initialRoom}];
+    let roomsToProcess = [{x: 0, y: 0, room: initialRoom}];
+
+    // While there are rooms to process
+    while(roomsToProcess.length !== 0) {
+        // Get next room to process
+        let roomToProcess = roomsToProcess.shift();
+        // Get connections
+        let connections = roomToProcess.room.connections;
+
+        // For each connection
+        connections.forEach(connection => {
+            // Check that we have not already processed this room
+            if(!isRoomProcessed(processedRooms, connection.room)){
+                // Add to processed rooms
+                // Update smallest/largest depending on direction
+                if(connection.direction === Direction.NORTH) {
+                    // Create processed room
+                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y - 1, room: connection.room};
+                    // Update smallest y
+                    if(smallestY > roomToProcess.y - 1) {
+                        smallestY = roomToProcess.y - 1;
+                    }
+                    // Add to list
+                    processedRooms.push(processedRoom);
+                    roomsToProcess.push(processedRoom);
+                }
+
+                if(connection.direction === Direction.EAST) {
+                    // Create processed room
+                    let processedRoom = {x: roomToProcess.x + 1, y: roomToProcess.y, room: connection.room};
+                    // Update smallest y
+                    if(largestX < roomToProcess.x + 1) {
+                        largestX = roomToProcess.x + 1;
+                    }
+                    // Add to list
+                    processedRooms.push(processedRoom);
+                    roomsToProcess.push(processedRoom);
+                }
+                
+                if(connection.direction === Direction.SOUTH) {
+                    // Create processed room
+                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y + 1, room: connection.room};
+                    // Update smallest y
+                    if(largestY < roomToProcess.y + 1) {
+                        largestY = roomToProcess.y + 1;
+                    }
+                    // Add to list
+                    processedRooms.push(processedRoom);
+                    roomsToProcess.push(processedRoom);
+                }
+
+                if(connection.direction === Direction.WEST) {
+                    // Create processed room
+                    let processedRoom = {x: roomToProcess.x - 1, y: roomToProcess.y, room: connection.room};
+                    // Update smallest y
+                    if(smallestX > roomToProcess.x - 1) {
+                        smallestX = roomToProcess.x - 1;
+                    }
+                    // Add to list
+                    processedRooms.push(processedRoom);
+                    roomsToProcess.push(processedRoom);
+                }
+            }
+        })
+    }
+
+    // Normalise coordinates (i.e minimum is 0)
+    processedRooms.forEach(procRoom => {
+        // As smallestX/smallestY are 0 or negative, 
+        // subtracting their value will normalise the coordinates
+        procRoom.x = procRoom.x - smallestX;
+        procRoom.y = procRoom.y - smallestY;
+    })
+
+    // Set largestx/largestY to correct values
+    largestX = largestX - smallestX;
+    largestY = largestY - smallestY;
+
+    // Create grid to store rooms in
+    let roomGrid = [];
+    // Add enough empty array so grid can be set
+    for(let i = 0; i <= largestY; i++) {
+        // Create line with all undefineds
+        let gridLine = []
+        for(let j = 0; j <= largestX; j++) {
+            gridLine[j] = undefined;
+        }
+        roomGrid[i] = gridLine;
+    }
+
+    processedRooms.forEach(procRoom => roomGrid[procRoom.y][procRoom.x] = procRoom.room);
+
+    return roomGrid;
+}
+
+function isRoomProcessed(procesedRooms: {x: number, y:number, room: Room} [], room: Room) {
+    for(let i = 0; i < procesedRooms.length; i++) {
+        if(procesedRooms[i].room.name === room.name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function updateRoomGrid() {
+
+}
+
+function printRoomGrid(roomGrid: Room[][]): string {
+    let gridAsString = "";
+    for(let y = 0; y < roomGrid.length; y++){
+        let line1 = "";
+        let line2 = "";
+        let line3 = "";
+        for(let x = 0; x < roomGrid[y].length; x++) {
+            // Get string represenation of room
+            let stringRoom = printRoom(roomGrid[y][x]);
+            // Extract all lines
+            let lines = stringRoom.split("\n");
+            // Save lines in correct variable
+            line1 = line1.concat(lines[0]);
+            line2 = line2.concat(lines[1]);
+            line3 = line3.concat(lines[2]);
+        }
+        // Combine all lines into one string
+        let rowAsString = line1.concat("\n", line2, "\n", line3, "\n");
+        // Save row in grid representation
+        gridAsString = gridAsString.concat(rowAsString);
+    }
+    return gridAsString;
+}
+
+function printRoom(room: Room) {
+    if(room){
+        let roomName = room.name;
+        let roomContent = " ";
+        let northConnection = " ";
+        let eastConnection = " ";
+        let southConnection = " ";
+        let westConnection = " ";
+
+        if(room.contents === ObjectType.KEY) {
+            roomContent = "K";
+        } else if(room.contents === ObjectType.ORB) {
+            roomContent = "O";
+        }
+
+        room.connections.forEach(connection => {
+            if(connection.direction === Direction.NORTH) {
+                if(connection.connectionType == ConnectionType.DOOR) {
+                    northConnection = "D";
+                }
+            }
+            if(connection.direction === Direction.EAST) {
+                if(connection.connectionType == ConnectionType.DOOR) {
+                    eastConnection = "D";
+                }
+            }
+            if(connection.direction === Direction.SOUTH) {
+                if(connection.connectionType == ConnectionType.DOOR) {
+                    southConnection = "D";
+                }
+            }
+            if(connection.direction === Direction.WEST) {
+                if(connection.connectionType == ConnectionType.DOOR) {
+                    westConnection = "D";
+                }
+            }
+        });
+
+        return `${roomName}${northConnection}┐\n${westConnection}${roomContent}${eastConnection}\n└${southConnection}┘`;
+    } else {
+        return `   \n   \n   `;
+    }
+}
+
+let roomGrid = createRoomGrid(room1);
+console.log(roomGrid);
+console.log(printRoom(room1));
+console.log(printRoomGrid(roomGrid));
