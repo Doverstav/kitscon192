@@ -483,8 +483,25 @@ class Robot implements WeightedNode {
     equals(toCompare: Robot): boolean {
         // Robots are equal of they are in the same room
         // If holding is specified, it must also be equal
-        return (toCompare.location ? this.location.name === toCompare.location.name : true)
-                && (toCompare.holding ? this.holding === toCompare.holding : true);
+        let locationIsSignificant = true;
+        let holdingIsSignificant = true;
+        let roomContentsIsSignificant = true;
+
+        if(toCompare.location) {
+            locationIsSignificant = this.location.name === toCompare.location.name;
+        }
+
+        if(toCompare.location && toCompare.location.contents) {
+            roomContentsIsSignificant = this.location.contents === toCompare.location.contents;
+        }
+
+        if(toCompare.holding) {
+            holdingIsSignificant = this.holding === toCompare.holding;
+        }
+        
+        return locationIsSignificant 
+                && holdingIsSignificant
+                && roomContentsIsSignificant;
     }
 }
 
@@ -765,9 +782,13 @@ let endRobot1 = new Robot(ObjectType.ORB, undefined);
 let testRobot2 = new Robot(ObjectType.NOTHING, room1);
 let endRobot2 = new Robot(ObjectType.ORB, room6);
 
+let testRobot3 = new Robot(ObjectType.NOTHING, room1);
+let endRobot3 = new Robot(undefined, new Room('e', ObjectType.ORB, []));
+
 console.log(shortestPath(testRobot, endRobot));
 console.log(shortestPath(testRobot1, endRobot1));
 console.log(shortestPath(testRobot2, endRobot2));
+console.log(shortestPath(testRobot3, endRobot3));
 
 let severalMovesWithOneRobot = new Robot(ObjectType.NOTHING, room1);
 let firstGoal = new Robot(undefined, room3);
