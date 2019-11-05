@@ -559,8 +559,8 @@ function isRoomProcessed(procesedRooms: {x: number, y:number, room: Room} [], ro
     return false;
 }
 
-function updateRoomGrid() {
-
+function updateRoomGrid(edge: Edge, roomGrid: {x: number, y: number, room: Room, robot: boolean}[][]) {
+    // Given an edge (robot -> robot) and a room grid, should update room grid accordingly
 }
 
 function printRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean}[][]): string {
