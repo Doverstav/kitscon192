@@ -559,10 +559,6 @@ function isRoomProcessed(procesedRooms: {x: number, y:number, room: Room} [], ro
     return false;
 }
 
-function updateRoomGrid(edge: Edge, roomGrid: {x: number, y: number, room: Room, robot: boolean}[][]) {
-    // Given an edge (robot -> robot) and a room grid, should update room grid accordingly
-}
-
 function printRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean}[][]): string {
     let gridAsString = "";
     for(let y = 0; y < roomGrid.length; y++){
@@ -636,18 +632,37 @@ function printRoom(gridRoom: {x: number, y: number, room: Room, robot: boolean})
 
 function init() {
     console.log("I am init!")
-    
     // Create map
-    let initialRoom = createMap();
+    let startRobot = createMap();
     // Paint map
-    firstDraw(initialRoom);
+    drawMap(startRobot);
+
+    let goalRobot = new Robot(ObjectType.ORB, room5);
+
+    let pathToGoal = shortestPath(startRobot, goalRobot);
+    console.log(pathToGoal);
+
+    drawRobotPath(pathToGoal.slice());
 }
 
 function createMap() {
-    return new Robot(ObjectType.NOTHING, room5);
+    return new Robot(ObjectType.NOTHING, room1);
 }
 
-function firstDraw(robot: Robot) {
+function drawRobotPath(path: Edge []) {
+    if(path.length !== 0) {
+        setTimeout(() => {
+            let pathFragment = path.shift();
+            let nextMapState = pathFragment.to as Robot;
+            drawMap(nextMapState);
+            drawRobotPath(path)
+        }, 1000);
+    } else {
+        return;
+    }
+}
+
+function drawMap(robot: Robot) {
     // Get map as string
     let mapAsString = printRoomGrid(createRoomGrid(robot));
     // Paint it in frontend
