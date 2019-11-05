@@ -446,7 +446,7 @@ room6.connections = [
     }
 ]
 
-function createRoomGrid(initialRoom: Room) {
+function createRoomGrid(initialRoom: Robot) {
     // Keep track of max/min indexes so we can normalize them later
     let smallestX = 0;
     let largestX = 0;
@@ -454,8 +454,8 @@ function createRoomGrid(initialRoom: Room) {
     let largestY = 0;
 
     // Set starting room as origo
-    let processedRooms = [{x: 0, y: 0, room: initialRoom}];
-    let roomsToProcess = [{x: 0, y: 0, room: initialRoom}];
+    let processedRooms = [{x: 0, y: 0, room: initialRoom.location, robot: true}];
+    let roomsToProcess = [{x: 0, y: 0, room: initialRoom.location, robot: true}];
 
     // While there are rooms to process
     while(roomsToProcess.length !== 0) {
@@ -472,7 +472,7 @@ function createRoomGrid(initialRoom: Room) {
                 // Update smallest/largest depending on direction
                 if(connection.direction === Direction.NORTH) {
                     // Create processed room
-                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y - 1, room: connection.room};
+                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y - 1, room: connection.room, robot: false};
                     // Update smallest y
                     if(smallestY > roomToProcess.y - 1) {
                         smallestY = roomToProcess.y - 1;
@@ -484,7 +484,7 @@ function createRoomGrid(initialRoom: Room) {
 
                 if(connection.direction === Direction.EAST) {
                     // Create processed room
-                    let processedRoom = {x: roomToProcess.x + 1, y: roomToProcess.y, room: connection.room};
+                    let processedRoom = {x: roomToProcess.x + 1, y: roomToProcess.y, room: connection.room, robot: false};
                     // Update smallest y
                     if(largestX < roomToProcess.x + 1) {
                         largestX = roomToProcess.x + 1;
@@ -496,7 +496,7 @@ function createRoomGrid(initialRoom: Room) {
                 
                 if(connection.direction === Direction.SOUTH) {
                     // Create processed room
-                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y + 1, room: connection.room};
+                    let processedRoom = {x: roomToProcess.x, y: roomToProcess.y + 1, room: connection.room, robot: false};
                     // Update smallest y
                     if(largestY < roomToProcess.y + 1) {
                         largestY = roomToProcess.y + 1;
@@ -508,7 +508,7 @@ function createRoomGrid(initialRoom: Room) {
 
                 if(connection.direction === Direction.WEST) {
                     // Create processed room
-                    let processedRoom = {x: roomToProcess.x - 1, y: roomToProcess.y, room: connection.room};
+                    let processedRoom = {x: roomToProcess.x - 1, y: roomToProcess.y, room: connection.room, robot: false};
                     // Update smallest y
                     if(smallestX > roomToProcess.x - 1) {
                         smallestX = roomToProcess.x - 1;
@@ -534,7 +534,7 @@ function createRoomGrid(initialRoom: Room) {
     largestY = largestY - smallestY;
 
     // Create grid to store rooms in
-    let roomGrid = [];
+    let roomGrid: {x: number, y: number, room: Room, robot: boolean} [][] = [];
     // Add enough empty array so grid can be set
     for(let i = 0; i <= largestY; i++) {
         // Create line with all undefineds
@@ -545,7 +545,7 @@ function createRoomGrid(initialRoom: Room) {
         roomGrid[i] = gridLine;
     }
 
-    processedRooms.forEach(procRoom => roomGrid[procRoom.y][procRoom.x] = procRoom.room);
+    processedRooms.forEach(procRoom => roomGrid[procRoom.y][procRoom.x] = procRoom);
 
     return roomGrid;
 }
@@ -563,7 +563,7 @@ function updateRoomGrid() {
 
 }
 
-function printRoomGrid(roomGrid: Room[][]): string {
+function printRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean}[][]): string {
     let gridAsString = "";
     for(let y = 0; y < roomGrid.length; y++){
         let line1 = "";
@@ -587,8 +587,9 @@ function printRoomGrid(roomGrid: Room[][]): string {
     return gridAsString;
 }
 
-function printRoom(room: Room) {
-    if(room){
+function printRoom(gridRoom: {x: number, y: number, room: Room, robot: boolean}) {
+    if(gridRoom){
+        let room = gridRoom.room;
         let roomName = room.name;
         let roomContent = " ";
         let northConnection = " ";
@@ -596,7 +597,9 @@ function printRoom(room: Room) {
         let southConnection = " ";
         let westConnection = " ";
 
-        if(room.contents === ObjectType.KEY) {
+        if(gridRoom.robot) {
+            roomContent = "R";
+        }else if(room.contents === ObjectType.KEY) {
             roomContent = "K";
         } else if(room.contents === ObjectType.ORB) {
             roomContent = "O";
@@ -635,14 +638,18 @@ function init() {
     console.log("I am init!")
     
     // Create map
-    createMap();
+    let initialRoom = createMap();
     // Paint map
+    firstDraw(initialRoom);
 }
 
 function createMap() {
-
+    return new Robot(ObjectType.NOTHING, room5);
 }
 
-function firstDraw() {
-    
+function firstDraw(robot: Robot) {
+    // Get map as string
+    let mapAsString = printRoomGrid(createRoomGrid(robot));
+    // Paint it in frontend
+    document.querySelector("#mapDiv").innerHTML = mapAsString;
 }
