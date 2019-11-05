@@ -984,7 +984,16 @@ function printRoom(room: Room) {
     }
 }
 
-let roomGrid = createRoomGrid(room1);
-console.log(roomGrid);
-console.log(printRoom(room1));
-console.log(printRoomGrid(roomGrid));
+function init() {
+    console.log("I am init!")
+    // Create map
+    // Paint map
+}
+
+function createMap() {
+
+}
+
+function firstDraw() {
+    
+}
