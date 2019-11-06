@@ -653,7 +653,7 @@ function init() {
     // Create roomgrid
     let testGrid = createRoomGrid(startRobot);
     // Paint map
-    drawMap(testGrid);
+    render(testGrid, startRobot);
 
     let goalRobot = new Robot(undefined, new Room('e', ObjectType.ORB, []));
 
@@ -689,12 +689,22 @@ function drawRobotPath(path: Edge [], roomGrid: { x: number; y: number; room: Ro
             let pathFragment = path.shift();
             let nextMapState = pathFragment.to as Robot;
             updateRoomGrid(roomGrid, nextMapState.location);
-            drawMap(roomGrid);
+            render(roomGrid, nextMapState);
             drawRobotPath(path, roomGrid);
         }, 1000);
     } else {
         return;
     }
+}
+
+function render(roomGrid: { x: number; y: number; room: Room; robot: boolean; }[][], currentRobot: Robot) {
+    drawRobotState(currentRobot);
+    drawMap(roomGrid);
+}
+
+function drawRobotState(robot: Robot) {
+    document.querySelector("#locationText").innerHTML = robot.location.name;
+    document.querySelector("#holdingText").innerHTML = robot.holding;
 }
 
 function drawMap(roomGrid: { x: number; y: number; room: Room; robot: boolean; }[][]) {
