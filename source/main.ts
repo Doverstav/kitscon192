@@ -127,21 +127,21 @@ class Robot implements WeightedVertex {
             if(connection.connectionType === ConnectionType.HALLWAY) {
                 console.log("HALLWAY")
                 let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
-                this.addEdge(nextState, 1);
+                this.addEdge(nextState, 4);
             }
 
             // If door and no key, force door
             if(connection.connectionType === ConnectionType.DOOR && this.holding !== ObjectType.KEY) {
                 console.log("FORCE");
                 let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
-                this.addEdge(nextState, 10);
+                this.addEdge(nextState, 40);
             }
 
             // If door and holding key, open door
             if(connection.connectionType === ConnectionType.DOOR && this.holding === ObjectType.KEY) {
                 console.log("OPEN");
                 let nextState = new Robot(ObjectType.NOTHING, this.createNewRoomInstances(connection.room));
-                this.addEdge(nextState, 1);
+                this.addEdge(nextState, 4);
             }
 
         })
@@ -155,7 +155,7 @@ class Robot implements WeightedVertex {
             let remadeEverything = this.createNewRoomInstances(updatedLocation);
             // Create next state
             let nextState = new Robot(ObjectType.NOTHING, remadeEverything);
-            this.addEdge(nextState, 0.25);
+            this.addEdge(nextState, 1);
         }
 
         // If object is in room, pick it up
@@ -167,7 +167,7 @@ class Robot implements WeightedVertex {
             let remadeEverything = this.createNewRoomInstances(updatedLocation);
             // Create next state
             let nextState = new Robot(objectToPickup, remadeEverything);
-            this.addEdge(nextState, 0.25);
+            this.addEdge(nextState, 1);
         }
     }
 
@@ -646,16 +646,19 @@ function printRoom(gridRoom: {x: number, y: number, room: Room, robot: boolean})
     }
 }
 
+let currentRoom : Robot;
+let roomGrid:  { x: number; y: number; room: Room; robot: boolean; }[][];
+
 function init() {
     console.log("I am init!")
     // Create map
-    let startRobot = createMap();
+    currentRoom = createMap();
     // Create roomgrid
-    let testGrid = createRoomGrid(startRobot);
+    roomGrid = createRoomGrid(currentRoom);
     // Paint map
-    render(testGrid, startRobot);
+    render(roomGrid, currentRoom);
 
-    let goalRobot = new Robot(undefined, new Room('e', ObjectType.ORB, []));
+    /* let goalRobot = new Robot(undefined, new Room('e', ObjectType.ORB, []));
 
     let pathToGoal = shortestPath(startRobot, goalRobot);
     let goalBack = new Robot(undefined, room3);
@@ -674,7 +677,7 @@ function init() {
 
     setTimeout(() => {
         drawRobotPath(thirdPath.slice(), testGrid);
-    }, 15000);
+    }, 15000); */
 
     
 }
@@ -712,4 +715,69 @@ function drawMap(roomGrid: { x: number; y: number; room: Room; robot: boolean; }
     let mapAsString = printRoomGrid(roomGrid);
     // Paint it in frontend
     document.querySelector("#mapDiv").innerHTML = mapAsString;
+}
+
+function parseGoal() {
+    document.querySelector("#goalFeedback").innerHTML = "";
+    let goalInput = document.querySelector("#goalInput") as HTMLInputElement;
+    let goal = goalInput.value;
+    let tokens = goal.split(" ");
+    let command = tokens.shift().toLocaleLowerCase();
+    
+    if(command === "put") {
+        // Put down object, possibly in a room
+        let dropObject = tokens[0];
+        let targetRoomName = tokens[1];
+        let targetRoom = undefined;
+        if(targetRoomName) {
+            targetRoom = new Room(targetRoomName, stringToObjectType(dropObject), []);
+        }
+
+        let goalRobot = new Robot(ObjectType.NOTHING, targetRoom);
+        executeGoal(goalRobot);
+    } else if(command === "goto") {
+        // Goto some room, possibly holding and object
+        let gotoRoom = tokens[0];
+        let goalObject = tokens[1];
+        let objectToHold = undefined
+        if(goalObject) {
+            objectToHold = stringToObjectType(goalObject);
+        }
+
+        let goalRobot = new Robot(objectToHold, new Room(gotoRoom, undefined, []));
+        executeGoal(goalRobot);
+    } else if(command === "get") {
+        // Pick up some object, possibly in a specific room
+        let fetchObject = tokens[0];
+        let targetRoomName = tokens[1];
+        let targetRoom = undefined;
+        if(targetRoomName) {
+            targetRoom = new Room(targetRoomName, undefined, []);
+        }
+
+        let goalRobot = new Robot(stringToObjectType(fetchObject), targetRoom);
+        executeGoal(goalRobot);
+    } else {
+        document.querySelector("#goalFeedback").innerHTML = "Bad command"
+    }
+}
+
+function executeGoal(goalRobot: Robot) {
+    let pathToGoal = shortestPath(currentRoom, goalRobot);
+    console.log(pathToGoal);
+    currentRoom = pathToGoal[pathToGoal.length - 1].to as Robot;
+    drawRobotPath(pathToGoal.slice(), roomGrid);
+}
+
+function stringToObjectType(stringObject: string) {
+    let lowercase = stringObject.toLocaleLowerCase();
+    if(lowercase === "key") {
+        return ObjectType.KEY;
+    } else if(lowercase === "orb") {
+        return ObjectType.ORB;
+    } else if(lowercase === "nothing") {
+        return ObjectType.NOTHING;
+    } else {
+        return undefined;
+    }
 }
