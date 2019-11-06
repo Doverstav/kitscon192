@@ -52,6 +52,10 @@ class Room {
         );
     }
 
+    copy() {
+        return new Room(this.name, this.contents, this.connections);
+    }
+
     equals(otherRoom: Room) {
         return this.name === otherRoom.name;
     }
@@ -111,108 +115,59 @@ class Robot implements WeightedVertex {
 
     moveRobot() {
         // Go to adjacent rooms
-        this.location.connections.forEach(
-            (connection, index) => {
-                // If hallway, just go to adjacent room
-                if(connection.connectionType === ConnectionType.HALLWAY) {
-                    let newRobot = new Robot(this.holding, connection.room);
-                    this.addEdge(newRobot, 1);
-                }
 
-                // If there is a door and we have a key we can open it
-                if(connection.connectionType === ConnectionType.DOOR
-                    && this.holding === ObjectType.KEY) {
-                        
-                        // Create new copy of room we are leaving with connection as Hallway
-                        let updatedRoom = new Room(
-                            this.location.name,
-                            this.location.contents,
-                            this.location.connections
-                        )
-                        // Copy connection and update connections in new room copy
-                        let connectionCopy = new Connection(connection.room, ConnectionType.HALLWAY, connection.direction);
-                        updatedRoom.connections[index] = connectionCopy;
+        // TODO: NEW IMPLEMENTATION
+        // Create new instances of all rooms
+        // Otherwise (as rooms are passed by reference) updating rooms in one robot will update them for all robots
+        let locationCopy = this.createNewRoomInstances(this.location);
 
-                        // Update connection in destination room
-                        connectionCopy.room.connections.forEach(
-                            (otherConnection, index) => {
-                                // We have found the connection from the other side 
-                                // leading back here
-                                if(otherConnection.room.name === this.location.name) {
-                                    // Copy connection and set new
-                                    let updatedConnection = new Connection(otherConnection.room, ConnectionType.HALLWAY, otherConnection.direction);
-                                    connection.room.connections[index] = updatedConnection;
-                                }
-                            }
-                        )
-
-                        // Move robot
-                        let newRobot = new Robot(ObjectType.NOTHING, connectionCopy.room);
-                        this.addEdge(newRobot, 1);
-
-                }
-
-                // If there is a door but no key, we can force it
-                if(connection.connectionType === ConnectionType.DOOR
-                    && this.holding === ObjectType.NOTHING) {
-
-                    // Create new copy of room we are leaving with connection as Hallway
-                    let updatedRoom = new Room(
-                        this.location.name,
-                        this.location.contents,
-                        this.location.connections
-                    )
-                    // Copy connection and update connections in new room copy
-                    let connectionCopy = new Connection(connection.room, ConnectionType.HALLWAY, connection.direction);
-                    updatedRoom.connections[index] = connectionCopy;
-
-                    // Update connection in destination room
-                    connectionCopy.room.connections.forEach(
-                        (otherConnection, index) => {
-                            // We have found the connection from the other side 
-                            // leading back here
-                            if(otherConnection.room.name === this.location.name) {
-                                // Copy connection and set new
-                                let updatedConnection = new Connection(otherConnection.room, ConnectionType.HALLWAY, otherConnection.direction);
-                                connection.room.connections[index] = updatedConnection;
-                            }
-                        }
-                    )
-                    
-                    // Move robot
-                    let newRobot = new Robot(this.holding, connection.room);
-                    this.addEdge(newRobot, 10);
-                }
+        // For each connection
+        locationCopy.connections.forEach((connection, connectionIndex) => {
+            // If hallway, go to next room
+            if(connection.connectionType === ConnectionType.HALLWAY) {
+                console.log("HALLWAY")
+                let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
+                this.addEdge(nextState, 1);
             }
-        )
 
-        // Pick up object
-        if(this.holding === ObjectType.NOTHING && this.location.contents !== ObjectType.NOTHING) {
-            // remove object from room
-            let updatedRoom = new Room(
-                this.location.name, 
-                ObjectType.NOTHING, 
-                this.location.connections
-            );
-            // Create new robot
-            let newRobot = new Robot(this.location.contents, updatedRoom);
-            // Create edge
-            this.addEdge(newRobot, 1);
+            // If door and no key, force door
+            if(connection.connectionType === ConnectionType.DOOR && this.holding !== ObjectType.KEY) {
+                console.log("FORCE");
+                let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
+                this.addEdge(nextState, 10);
+            }
+
+            // If door and holding key, open door
+            if(connection.connectionType === ConnectionType.DOOR && this.holding === ObjectType.KEY) {
+                console.log("OPEN");
+                let nextState = new Robot(ObjectType.NOTHING, this.createNewRoomInstances(connection.room));
+                this.addEdge(nextState, 1);
+            }
+
+        })
+
+        // If holding object and there is space in room, drop it
+        if(this.holding !== ObjectType.NOTHING && locationCopy.contents === ObjectType.NOTHING) {
+            console.log("DROP")
+            // Drop object
+            locationCopy.contents = this.holding;
+            let updatedLocation = new Room(locationCopy.name, this.holding, locationCopy.connections);
+            let remadeEverything = this.createNewRoomInstances(updatedLocation);
+            // Create next state
+            let nextState = new Robot(ObjectType.NOTHING, remadeEverything);
+            this.addEdge(nextState, 0.25);
         }
 
-        // Drop object
-        // Can only drop if room is currently empty
-        if(this.holding !== ObjectType.NOTHING && this.location.contents === ObjectType.NOTHING) {
-            // Put object in room
-            let updatedRoom = new Room(
-                this.location.name,
-                this.holding,
-                this.location.connections
-            )
-            // Create new robot
-            let newRobot = new Robot(ObjectType.NOTHING, updatedRoom);
-            // Create edge
-            this.addEdge(newRobot, 1);
+        // If object is in room, pick it up
+        if(this.holding === ObjectType.NOTHING && locationCopy.contents !== ObjectType.NOTHING) {
+            console.log("PICKUP")
+            // Save object
+            let objectToPickup = locationCopy.contents;
+            let updatedLocation = new Room(locationCopy.name, ObjectType.NOTHING, locationCopy.connections);
+            let remadeEverything = this.createNewRoomInstances(updatedLocation);
+            // Create next state
+            let nextState = new Robot(objectToPickup, remadeEverything);
+            this.addEdge(nextState, 0.25);
         }
     }
 
@@ -226,6 +181,54 @@ class Robot implements WeightedVertex {
         }
 
         return this.edges;
+    }
+
+    // When creating a new copy of a room, make sure that all connection rooms point to that new copy
+    updateRoomConnections(updatedRoom: Room) {
+        updatedRoom.connections.forEach(
+            connection => {
+                connection.room.connections.forEach(connectionBack => {
+                    if(connectionBack.room.name === updatedRoom.name) {
+                        connectionBack.room = updatedRoom;
+                    }
+                })
+            }
+        );
+    }
+
+    // Given a room, create new instances of all rooms in this group
+    createNewRoomInstances(room: Room) {
+        let initialCopy = room.copy()
+        let roomsToUpdate = [initialCopy];
+        let copiedRooms = [initialCopy];
+
+        while(roomsToUpdate.length !== 0) {
+            let roomToUpdate = roomsToUpdate.shift();
+            // Make sure all rooms reference this new copy
+            this.updateRoomConnections(roomToUpdate);
+            // For all rooms connecting to this one
+            roomToUpdate.connections.forEach(connection => {
+                // If they are not already copied
+                if(!this.isRoomCopied(copiedRooms, connection.room)) {
+                    let copiedRoom = connection.room.copy()
+                    // Add to list of rooms that should be copied
+                    roomsToUpdate.push(copiedRoom)
+                    // Set it as copied so that we don not do work twice
+                    copiedRooms.push(copiedRoom);
+                }
+            })
+        }
+        
+        return copiedRooms[0];
+    }
+
+    isRoomCopied(copiedRooms: Room [], room: Room) {
+        for(let i = 0; i < copiedRooms.length; i++) {
+            if(copiedRooms[i].name === room.name) {
+                return true;
+            }
+        }
+        return false;
     }
 
     toString() {
@@ -550,6 +553,19 @@ function createRoomGrid(initialRoom: Robot) {
     return roomGrid;
 }
 
+function updateRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean} [][], room: Room) {
+    console.log(`Updating grid with ${room.name}`);
+    for(let y = 0; y < roomGrid.length; y++) {
+        for(let x = 0; x < roomGrid[y].length; x++) {
+            if(roomGrid[y][x] && roomGrid[y][x].room.name === room.name) {
+                roomGrid[y][x] = {...roomGrid[y][x], room, robot: true};
+            } else if(roomGrid[y][x]) {
+                roomGrid[y][x] = {...roomGrid[y][x], robot: false};
+            }
+        }
+    }
+}
+
 function isRoomProcessed(procesedRooms: {x: number, y:number, room: Room} [], room: Room) {
     for(let i = 0; i < procesedRooms.length; i++) {
         if(procesedRooms[i].room.name === room.name) {
@@ -634,37 +650,56 @@ function init() {
     console.log("I am init!")
     // Create map
     let startRobot = createMap();
+    // Create roomgrid
+    let testGrid = createRoomGrid(startRobot);
     // Paint map
-    drawMap(startRobot);
+    drawMap(testGrid);
 
-    let goalRobot = new Robot(ObjectType.ORB, room5);
+    let goalRobot = new Robot(undefined, new Room('e', ObjectType.ORB, []));
 
     let pathToGoal = shortestPath(startRobot, goalRobot);
+    let goalBack = new Robot(undefined, room3);
+    let pathBack = shortestPath(pathToGoal[pathToGoal.length - 1].to, goalBack);
+    let thirdGoal = new Robot(undefined, room1);
+    let thirdPath = shortestPath(pathBack[pathBack.length - 1].to, thirdGoal);
     console.log(pathToGoal);
+    console.log(pathBack);
+    console.log(thirdPath);
 
-    drawRobotPath(pathToGoal.slice());
+    drawRobotPath(pathToGoal.slice(), testGrid);
+
+    setTimeout(() => {
+        drawRobotPath(pathBack.slice(), testGrid);
+    }, 10000);
+
+    setTimeout(() => {
+        drawRobotPath(thirdPath.slice(), testGrid);
+    }, 15000);
+
+    
 }
 
 function createMap() {
     return new Robot(ObjectType.NOTHING, room1);
 }
 
-function drawRobotPath(path: Edge []) {
+function drawRobotPath(path: Edge [], roomGrid: { x: number; y: number; room: Room; robot: boolean; }[][]) {
     if(path.length !== 0) {
         setTimeout(() => {
             let pathFragment = path.shift();
             let nextMapState = pathFragment.to as Robot;
-            drawMap(nextMapState);
-            drawRobotPath(path)
+            updateRoomGrid(roomGrid, nextMapState.location);
+            drawMap(roomGrid);
+            drawRobotPath(path, roomGrid);
         }, 1000);
     } else {
         return;
     }
 }
 
-function drawMap(robot: Robot) {
+function drawMap(roomGrid: { x: number; y: number; room: Room; robot: boolean; }[][]) {
     // Get map as string
-    let mapAsString = printRoomGrid(createRoomGrid(robot));
+    let mapAsString = printRoomGrid(roomGrid);
     // Paint it in frontend
     document.querySelector("#mapDiv").innerHTML = mapAsString;
 }
