@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript" src="script.js" defer></script>
+    </head>
+    <body onload="init()">
+        <h1>Map</h1>
+        <div id="mapDiv"></div>
+        <div>
+            <h2>Robot</h2>
+            <div>
+                <p>Location: <span id="locationText"></span></p>
+                <p>Holding: <span id="holdingText"></span></p>
+            </div>
+        </div>
+        <div>
+            <h3>Input goal</h3>
+            <input type="text" id="goalInput" />
+            <button onclick="parseGoal()">Execute goal</button>
+            <p id="goalFeedback"></p>
+        </div>
+        <h3>Information</h3>
+        <div>
+            <p>Accepted goals are the following</p>
+            <ul>
+                <li>GET [OBJECT] [ROOM]: Get object from specified room</li>
+                <li>GET [OBJECT]: Get object from any room</li>
+                <li>PUT [OBJECT] [ROOM]: Put object in specified room</li>
+                <li>PUT [OBJECT]: Put object in any room (can be used to drop held object in current room)</li>
+                <li>GOTO [ROOM] [OBJECT]: Go to specified room holding object</li>
+                <li>GOTO [ROOM]: Go to specified room</li>
+            </ul>
+            <p>
+                [OBJECT] can be either ORB, KEY or NOTHING. <br>
+                [ROOM] can be a room name, found in top-right corner of rooms on map.
+            </p>
+        </div>
+        <div>
+            Map legend:
+            <ul>
+                <li>O: Orb</li>
+                <li>K: Key</li>
+                <li>R: Robot</li>
+                <li>DD: The path between these rooms is blocked by a door, impeding progress unless you have a key. Can be forced open, but doing this costs more energy.</li>
+            </ul>
+        </div>
+    </body>
+</html>
