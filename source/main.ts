@@ -122,45 +122,40 @@ class Robot implements WeightedVertex {
         let locationCopy = this.createNewRoomInstances(this.location);
 
         // For each connection
-        locationCopy.connections.forEach((connection, connectionIndex) => {
+        locationCopy.connections.forEach(connection => {
             // If hallway, go to next room
             if(connection.connectionType === ConnectionType.HALLWAY) {
-                console.log("HALLWAY")
                 let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
                 this.addEdge(nextState, 4);
             }
 
             // If door and no key, force door
             if(connection.connectionType === ConnectionType.DOOR && this.holding !== ObjectType.KEY) {
-                console.log("FORCE");
                 let nextState = new Robot(this.holding, this.createNewRoomInstances(connection.room));
                 this.addEdge(nextState, 40);
             }
 
             // If door and holding key, open door
             if(connection.connectionType === ConnectionType.DOOR && this.holding === ObjectType.KEY) {
-                console.log("OPEN");
                 let nextState = new Robot(ObjectType.NOTHING, this.createNewRoomInstances(connection.room));
                 this.addEdge(nextState, 4);
             }
-
         })
 
         // If holding object and there is space in room, drop it
-        if(this.holding !== ObjectType.NOTHING && locationCopy.contents === ObjectType.NOTHING) {
-            console.log("DROP")
+        // TODO: Fix bug where robot drops object in every rom and pollutes the map
+        /*if(this.holding !== ObjectType.NOTHING && locationCopy.contents === ObjectType.NOTHING) {
             // Drop object
-            locationCopy.contents = this.holding;
             let updatedLocation = new Room(locationCopy.name, this.holding, locationCopy.connections);
             let remadeEverything = this.createNewRoomInstances(updatedLocation);
             // Create next state
             let nextState = new Robot(ObjectType.NOTHING, remadeEverything);
             this.addEdge(nextState, 1);
-        }
+        }*/
 
         // If object is in room, pick it up
+        // TODO: This is also bugged, like drop
         if(this.holding === ObjectType.NOTHING && locationCopy.contents !== ObjectType.NOTHING) {
-            console.log("PICKUP")
             // Save object
             let objectToPickup = locationCopy.contents;
             let updatedLocation = new Room(locationCopy.name, ObjectType.NOTHING, locationCopy.connections);
@@ -553,8 +548,7 @@ function createRoomGrid(initialRoom: Robot) {
     return roomGrid;
 }
 
-function updateRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean} [][], room: Room) {
-    console.log(`Updating grid with ${room.name}`);
+/* function updateRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: boolean} [][], room: Room) {
     for(let y = 0; y < roomGrid.length; y++) {
         for(let x = 0; x < roomGrid[y].length; x++) {
             if(roomGrid[y][x] && roomGrid[y][x].room.name === room.name) {
@@ -564,7 +558,7 @@ function updateRoomGrid(roomGrid: {x: number, y: number, room: Room, robot: bool
             }
         }
     }
-}
+} */
 
 function isRoomProcessed(procesedRooms: {x: number, y:number, room: Room} [], room: Room) {
     for(let i = 0; i < procesedRooms.length; i++) {
@@ -650,7 +644,6 @@ let currentRoom : Robot;
 let roomGrid:  { x: number; y: number; room: Room; robot: boolean; }[][];
 
 function init() {
-    console.log("I am init!")
     // Create map
     currentRoom = createMap();
     // Create roomgrid
@@ -687,15 +680,17 @@ function createMap() {
 }
 
 function drawRobotPath(path: Edge [], roomGrid: { x: number; y: number; room: Room; robot: boolean; }[][]) {
+    document.querySelector("#goalFeedback").innerHTML = "Executing";
     if(path.length !== 0) {
         setTimeout(() => {
             let pathFragment = path.shift();
             let nextMapState = pathFragment.to as Robot;
-            updateRoomGrid(roomGrid, nextMapState.location);
-            render(roomGrid, nextMapState);
+            //updateRoomGrid(roomGrid, nextMapState.location);
+            render(createRoomGrid(nextMapState), nextMapState);
             drawRobotPath(path, roomGrid);
         }, 1000);
     } else {
+        document.querySelector("#goalFeedback").innerHTML = "";
         return;
     }
 }
@@ -758,15 +753,20 @@ function parseGoal() {
         let goalRobot = new Robot(stringToObjectType(fetchObject), targetRoom);
         executeGoal(goalRobot);
     } else {
-        document.querySelector("#goalFeedback").innerHTML = "Bad command"
+        document.querySelector("#goalFeedback").innerHTML = "Bad command";
     }
 }
 
 function executeGoal(goalRobot: Robot) {
+    document.querySelector("#goalFeedback").innerHTML = "Searching";
     let pathToGoal = shortestPath(currentRoom, goalRobot);
     console.log(pathToGoal);
-    currentRoom = pathToGoal[pathToGoal.length - 1].to as Robot;
-    drawRobotPath(pathToGoal.slice(), roomGrid);
+    if(pathToGoal) {
+        currentRoom = pathToGoal[pathToGoal.length - 1].to as Robot;
+        drawRobotPath(pathToGoal.slice(), roomGrid);
+    } else {
+        document.querySelector("#goalFeedback").innerHTML = "No path to goal";
+    }
 }
 
 function stringToObjectType(stringObject: string) {
