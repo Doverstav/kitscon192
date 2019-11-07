@@ -50,7 +50,6 @@ var Robot = /** @class */ (function () {
             var direction = tokenizedConnection[0].toLocaleUpperCase();
             var connectionType = tokenizedConnection[1].toLocaleUpperCase();
             var roomName = tokenizedConnection[2].toLocaleUpperCase();
-            var destinationRoom = _this.getRoom(roomName);
             // Go through hallway
             if (connectionType === "H") {
                 var nextState = new Robot(_this.holding, _this.copyAllRooms(), _this.getRoomIndex(roomName));
@@ -127,15 +126,12 @@ var Robot = /** @class */ (function () {
         var holdingIsSignificant = true;
         var roomContentsIsSignificant = true;
         if (toCompare.location !== undefined) {
-            console.log("comparing location");
             locationIsSignificant = this.rooms[this.location].name === toCompare.rooms[toCompare.location].name;
         }
         if (toCompare.location !== undefined && toCompare.rooms[toCompare.location].contents) {
-            console.log("comparing location contents");
             roomContentsIsSignificant = this.rooms[this.location].contents === toCompare.rooms[toCompare.location].contents;
         }
         if (toCompare.holding) {
-            console.log("comparing holding");
             holdingIsSignificant = this.holding === toCompare.holding;
         }
         return locationIsSignificant
@@ -261,11 +257,6 @@ function createRoomGrid(initialRoom) {
             var connectionType = tokenizedConnection[1];
             var roomName = tokenizedConnection[2];
             var connectingRoom = initialRoom.getRoom(roomName);
-            console.log(tokenizedConnection);
-            console.log(direction);
-            console.log(connectionType);
-            console.log(roomName);
-            console.log(connectingRoom);
             if (!isRoomProcessed(processedRooms, connectingRoom)) {
                 // Add to processed rooms
                 // Update smallest/largest depending on direction

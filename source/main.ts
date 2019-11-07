@@ -105,7 +105,6 @@ class Robot implements WeightedVertex {
             let direction = tokenizedConnection[0].toLocaleUpperCase();
             let connectionType = tokenizedConnection[1].toLocaleUpperCase();
             let roomName = tokenizedConnection[2].toLocaleUpperCase();
-            let destinationRoom = this.getRoom(roomName);
 
             // Go through hallway
             if(connectionType === "H") {
@@ -197,17 +196,14 @@ class Robot implements WeightedVertex {
         let roomContentsIsSignificant = true;
 
         if(toCompare.location !== undefined) {
-            console.log("comparing location")
             locationIsSignificant = this.rooms[this.location].name === toCompare.rooms[toCompare.location].name;
         }
 
         if(toCompare.location !== undefined && toCompare.rooms[toCompare.location].contents) {
-            console.log("comparing location contents")
             roomContentsIsSignificant = this.rooms[this.location].contents === toCompare.rooms[toCompare.location].contents;
         }
 
         if(toCompare.holding) {
-            console.log("comparing holding")
             holdingIsSignificant = this.holding === toCompare.holding;
         }
 
@@ -351,11 +347,7 @@ function createRoomGrid(initialRoom: Robot) {
             let connectionType = tokenizedConnection[1];
             let roomName = tokenizedConnection[2];
             let connectingRoom = initialRoom.getRoom(roomName);
-            console.log(tokenizedConnection)
-            console.log(direction)
-            console.log(connectionType)
-            console.log(roomName)
-            console.log(connectingRoom)
+
             if(!isRoomProcessed(processedRooms, connectingRoom)){
                 // Add to processed rooms
                 // Update smallest/largest depending on direction
