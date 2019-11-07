@@ -114,13 +114,17 @@ class Robot implements WeightedVertex {
 
             // If not holding key, force open door
             if(connectionType === "D" && this.holding !== ObjectType.KEY) {
-                let nextState = new Robot(this.holding, this.copyAllRooms(), this.getRoomIndex(roomName));
+                let copiedRooms = this.copyAllRooms();
+                this.updateRoomConnection(this.rooms[this.location].name, roomName, "H", copiedRooms);
+                let nextState = new Robot(this.holding, copiedRooms, this.getRoomIndex(roomName));
                 this.addEdge(nextState, 10);
             }
 
             // If holding key, use key to open door
             if(connectionType === "D" && this.holding === ObjectType.KEY) {
-                let nextState = new Robot(ObjectType.NOTHING, this.copyAllRooms(), this.getRoomIndex(roomName));
+                let copiedRooms = this.copyAllRooms();
+                this.updateRoomConnection(this.rooms[this.location].name, roomName, "H", copiedRooms);
+                let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.getRoomIndex(roomName));
                 this.addEdge(nextState, 1);
             }
         })
@@ -149,6 +153,38 @@ class Robot implements WeightedVertex {
             // Create next state
             let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.location);
             this.addEdge(nextState, 0.25);
+        }
+    }
+
+    updateRoomConnection(roomNameFrom: string, roomNameTo: string, connectionType: string, roomList: StringRoom []) {
+        roomNameFrom = roomNameFrom.toLocaleUpperCase();
+        roomNameTo = roomNameTo.toLocaleUpperCase();
+        for(let i = 0; i < roomList.length; i++) {
+            if(roomList[i].name.toLocaleUpperCase() === roomNameFrom) {
+                roomList[i].connections.forEach((connection, index) => {
+                    let tokenizedConnection = connection.split(" ");
+                    let direction = tokenizedConnection[0].toLocaleUpperCase();
+                    //let connectionType = tokenizedConnection[1].toLocaleUpperCase();
+                    let roomName = tokenizedConnection[2].toLocaleUpperCase();
+                    
+                    if(roomName === roomNameTo) {
+                        roomList[i].connections[index] = `${direction} ${connectionType} ${roomNameTo}`;
+                    }
+                })
+            }
+
+            if(roomList[i].name.toLocaleUpperCase() === roomNameTo) {
+                roomList[i].connections.forEach((connection, index) => {
+                    let tokenizedConnection = connection.split(" ");
+                    let direction = tokenizedConnection[0].toLocaleUpperCase();
+                    //let connectionType = tokenizedConnection[1].toLocaleUpperCase();
+                    let roomName = tokenizedConnection[2].toLocaleUpperCase();
+
+                    if(roomName === roomNameFrom) {
+                        roomList[i].connections[index] = `${direction} ${connectionType} ${roomNameFrom}`;
+                    }
+                })
+            }
         }
     }
 
@@ -259,11 +295,38 @@ function shortestPath(start: WeightedVertex, end: WeightedVertex) {
 
 function isNodeChecked(checkedNodes: WeightedVertex [], node: WeightedVertex) {
     for(let i = 0; i < checkedNodes.length; i++) {
-        if(checkedNodes[i].equals(node)) {
+        if(compareWorldState(checkedNodes[i] as Robot, node as Robot)) {
             return true;
         }
     }
     return false;
+}
+
+function compareWorldState(worldA: Robot, worldB: Robot) {
+    // Compare location
+    if(worldA.location !== worldB.location) {
+        return false;
+    }
+    // Compare holding
+    if(worldA.location !== worldB.location) {
+
+    }
+    // Compare every room
+    for(let i = 0; i < worldA.rooms.length; i++) {
+        if(worldA.rooms[i].name !== worldB.rooms[i].name) {
+            return false;
+        }
+        if(worldA.rooms[i].contents !== worldB.rooms[i].contents) {
+            return false;
+        }
+        
+        for(let j = 0; j < worldA.rooms[i].connections.length; j++) {
+            if(worldA.rooms[i].connections[i] !== worldB.rooms[i].connections[i]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 function pushPath(allPaths: (Edge []) [], newPath: Edge []) {
@@ -626,7 +689,7 @@ function parseGoal() {
         let targetRoom = undefined;
         let targetRoomIndex = undefined;
         if(targetRoomName) {
-            targetRoom = [{name: targetRoomName, contents: undefined, connections: []}];
+            targetRoom = [{name: targetRoomName, contents: ObjectType.NOTHING, connections: []}];
             targetRoomIndex = 0;
         }
 
@@ -640,7 +703,7 @@ function parseGoal() {
 function executeGoal(goalRobot: Robot) {
     document.querySelector("#goalFeedback").innerHTML = "Searching";
     let pathToGoal = shortestPath(currentRoom, goalRobot);
-    console.log(pathToGoal);
+
     if(pathToGoal && pathToGoal.length !== 0) {
         currentRoom = pathToGoal[pathToGoal.length - 1].to as Robot;
         drawRobotPath(pathToGoal.slice(), roomGrid);

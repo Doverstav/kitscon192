@@ -57,12 +57,16 @@ var Robot = /** @class */ (function () {
             }
             // If not holding key, force open door
             if (connectionType === "D" && _this.holding !== ObjectType.KEY) {
-                var nextState = new Robot(_this.holding, _this.copyAllRooms(), _this.getRoomIndex(roomName));
+                var copiedRooms = _this.copyAllRooms();
+                _this.updateRoomConnection(_this.rooms[_this.location].name, roomName, "H", copiedRooms);
+                var nextState = new Robot(_this.holding, copiedRooms, _this.getRoomIndex(roomName));
                 _this.addEdge(nextState, 10);
             }
             // If holding key, use key to open door
             if (connectionType === "D" && _this.holding === ObjectType.KEY) {
-                var nextState = new Robot(ObjectType.NOTHING, _this.copyAllRooms(), _this.getRoomIndex(roomName));
+                var copiedRooms = _this.copyAllRooms();
+                _this.updateRoomConnection(_this.rooms[_this.location].name, roomName, "H", copiedRooms);
+                var nextState = new Robot(ObjectType.NOTHING, copiedRooms, _this.getRoomIndex(roomName));
                 _this.addEdge(nextState, 1);
             }
         });
@@ -87,6 +91,37 @@ var Robot = /** @class */ (function () {
             // Create next state
             var nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.location);
             this.addEdge(nextState, 0.25);
+        }
+    };
+    Robot.prototype.updateRoomConnection = function (roomNameFrom, roomNameTo, connectionType, roomList) {
+        roomNameFrom = roomNameFrom.toLocaleUpperCase();
+        roomNameTo = roomNameTo.toLocaleUpperCase();
+        var _loop_1 = function (i) {
+            if (roomList[i].name.toLocaleUpperCase() === roomNameFrom) {
+                roomList[i].connections.forEach(function (connection, index) {
+                    var tokenizedConnection = connection.split(" ");
+                    var direction = tokenizedConnection[0].toLocaleUpperCase();
+                    //let connectionType = tokenizedConnection[1].toLocaleUpperCase();
+                    var roomName = tokenizedConnection[2].toLocaleUpperCase();
+                    if (roomName === roomNameTo) {
+                        roomList[i].connections[index] = direction + " " + connectionType + " " + roomNameTo;
+                    }
+                });
+            }
+            if (roomList[i].name.toLocaleUpperCase() === roomNameTo) {
+                roomList[i].connections.forEach(function (connection, index) {
+                    var tokenizedConnection = connection.split(" ");
+                    var direction = tokenizedConnection[0].toLocaleUpperCase();
+                    //let connectionType = tokenizedConnection[1].toLocaleUpperCase();
+                    var roomName = tokenizedConnection[2].toLocaleUpperCase();
+                    if (roomName === roomNameFrom) {
+                        roomList[i].connections[index] = direction + " " + connectionType + " " + roomNameFrom;
+                    }
+                });
+            }
+        };
+        for (var i = 0; i < roomList.length; i++) {
+            _loop_1(i);
         }
     };
     Robot.prototype.addEdge = function (neighbour, cost) {
@@ -150,7 +185,7 @@ function shortestPath(start, end) {
     start.getEdges().forEach(function (edge) { return pushPath(allPaths, [edge]); });
     // start is already "checked"
     var checkedNodes = [start];
-    var _loop_1 = function () {
+    var _loop_2 = function () {
         // Get current shortest path
         var current = allPaths.shift();
         var lastNode = lastNodeInPath(current);
@@ -176,18 +211,42 @@ function shortestPath(start, end) {
         });
     };
     while (allPaths.length != 0) {
-        var state_1 = _loop_1();
+        var state_1 = _loop_2();
         if (typeof state_1 === "object")
             return state_1.value;
     }
 }
 function isNodeChecked(checkedNodes, node) {
     for (var i = 0; i < checkedNodes.length; i++) {
-        if (checkedNodes[i].equals(node)) {
+        if (compareWorldState(checkedNodes[i], node)) {
             return true;
         }
     }
     return false;
+}
+function compareWorldState(worldA, worldB) {
+    // Compare location
+    if (worldA.location !== worldB.location) {
+        return false;
+    }
+    // Compare holding
+    if (worldA.location !== worldB.location) {
+    }
+    // Compare every room
+    for (var i = 0; i < worldA.rooms.length; i++) {
+        if (worldA.rooms[i].name !== worldB.rooms[i].name) {
+            return false;
+        }
+        if (worldA.rooms[i].contents !== worldB.rooms[i].contents) {
+            return false;
+        }
+        for (var j = 0; j < worldA.rooms[i].connections.length; j++) {
+            if (worldA.rooms[i].connections[i] !== worldB.rooms[i].connections[i]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 function pushPath(allPaths, newPath) {
     allPaths.push(newPath);
@@ -248,7 +307,7 @@ function createRoomGrid(initialRoom) {
     // Set starting room as origo
     var processedRooms = [{ x: 0, y: 0, room: initialRoom.rooms[initialRoom.location], robot: true }];
     var roomsToProcess = [{ x: 0, y: 0, room: initialRoom.rooms[initialRoom.location], robot: true }];
-    var _loop_2 = function () {
+    var _loop_3 = function () {
         // Get next room to process
         var roomToProcess = roomsToProcess.shift();
         // Get connections
@@ -313,7 +372,7 @@ function createRoomGrid(initialRoom) {
     };
     // While there are rooms to process
     while (roomsToProcess.length !== 0) {
-        _loop_2();
+        _loop_3();
     }
     // Normalise coordinates (i.e minimum is 0)
     processedRooms.forEach(function (procRoom) {
@@ -516,7 +575,7 @@ function parseGoal() {
         var targetRoom = undefined;
         var targetRoomIndex = undefined;
         if (targetRoomName) {
-            targetRoom = [{ name: targetRoomName, contents: undefined, connections: [] }];
+            targetRoom = [{ name: targetRoomName, contents: ObjectType.NOTHING, connections: [] }];
             targetRoomIndex = 0;
         }
         var goalRobot = new Robot(stringToObjectType(fetchObject), targetRoom, targetRoomIndex);
@@ -529,7 +588,6 @@ function parseGoal() {
 function executeGoal(goalRobot) {
     document.querySelector("#goalFeedback").innerHTML = "Searching";
     var pathToGoal = shortestPath(currentRoom, goalRobot);
-    console.log(pathToGoal);
     if (pathToGoal && pathToGoal.length !== 0) {
         currentRoom = pathToGoal[pathToGoal.length - 1].to;
         drawRobotPath(pathToGoal.slice(), roomGrid);
