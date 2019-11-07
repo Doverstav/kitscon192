@@ -141,6 +141,10 @@ var Robot = /** @class */ (function () {
     return Robot;
 }());
 function shortestPath(start, end) {
+    // Check if we are already at goal
+    if (start.equals(end)) {
+        return [];
+    }
     var allPaths = [];
     // Init allPaths
     start.getEdges().forEach(function (edge) { return pushPath(allPaths, [edge]); });
@@ -519,9 +523,12 @@ function executeGoal(goalRobot) {
     document.querySelector("#goalFeedback").innerHTML = "Searching";
     var pathToGoal = shortestPath(currentRoom, goalRobot);
     console.log(pathToGoal);
-    if (pathToGoal) {
+    if (pathToGoal && pathToGoal.length !== 0) {
         currentRoom = pathToGoal[pathToGoal.length - 1].to;
         drawRobotPath(pathToGoal.slice(), roomGrid);
+    }
+    else if (pathToGoal && pathToGoal.length === 0) {
+        document.querySelector("#goalFeedback").innerHTML = "Already at goal";
     }
     else {
         document.querySelector("#goalFeedback").innerHTML = "No path to goal";

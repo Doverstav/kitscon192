@@ -214,6 +214,11 @@ class Robot implements WeightedVertex {
 }
 
 function shortestPath(start: WeightedVertex, end: WeightedVertex) {
+    // Check if we are already at goal
+    if(start.equals(end)) {
+        return [];
+    }
+
     let allPaths: (Edge []) [] = [];
     // Init allPaths
     start.getEdges().forEach(
@@ -627,9 +632,11 @@ function executeGoal(goalRobot: Robot) {
     document.querySelector("#goalFeedback").innerHTML = "Searching";
     let pathToGoal = shortestPath(currentRoom, goalRobot);
     console.log(pathToGoal);
-    if(pathToGoal) {
+    if(pathToGoal && pathToGoal.length !== 0) {
         currentRoom = pathToGoal[pathToGoal.length - 1].to as Robot;
         drawRobotPath(pathToGoal.slice(), roomGrid);
+    } else if(pathToGoal && pathToGoal.length === 0) {
+        document.querySelector("#goalFeedback").innerHTML = "Already at goal";
     } else {
         document.querySelector("#goalFeedback").innerHTML = "No path to goal";
     }
