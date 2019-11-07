@@ -116,7 +116,8 @@ class Robot implements WeightedVertex {
             if(connectionType === "D" && this.holding !== ObjectType.KEY) {
                 let copiedRooms = this.copyAllRooms();
                 this.updateRoomConnection(this.rooms[this.location].name, roomName, "H", copiedRooms);
-                let nextState = new Robot(this.holding, copiedRooms, this.getRoomIndex(roomName));
+                //let nextState = new Robot(this.holding, copiedRooms, this.getRoomIndex(roomName));
+                let nextState = new Robot(this.holding, copiedRooms, this.location);
                 this.addEdge(nextState, 10);
             }
 
@@ -124,7 +125,8 @@ class Robot implements WeightedVertex {
             if(connectionType === "D" && this.holding === ObjectType.KEY) {
                 let copiedRooms = this.copyAllRooms();
                 this.updateRoomConnection(this.rooms[this.location].name, roomName, "H", copiedRooms);
-                let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.getRoomIndex(roomName));
+                //let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.getRoomIndex(roomName));
+                let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.location);
                 this.addEdge(nextState, 1);
             }
         })
