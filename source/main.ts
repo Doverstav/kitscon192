@@ -550,18 +550,21 @@ function printRoom(gridRoom: gridRoom) {
     if(gridRoom){
         let room = gridRoom.room;
         let roomName = room.name;
+        let robotContent = "  ";
         let roomContent = " ";
-        let northConnection = " ";
-        let eastConnection = " ";
-        let southConnection = " ";
-        let westConnection = " ";
+        let northConnection = `─`;
+        let eastConnection = `│`;
+        let southConnection = `─`;
+        let westConnection = `│`;
 
         if(gridRoom.robot) {
-            roomContent = "R";
-        }else if(room.contents === ObjectType.KEY) {
-            roomContent = "K";
+            robotContent = "<span class=\"robot\">:)</span>";
+        }
+        
+        if(room.contents === ObjectType.KEY) {
+            roomContent = "<span class=\"key\">K</span>";
         } else if(room.contents === ObjectType.ORB) {
-            roomContent = "O";
+            roomContent = "<span class=\"orb\">O</span>";
         }
 
         room.connections.forEach(connection => {
@@ -570,29 +573,37 @@ function printRoom(gridRoom: gridRoom) {
             let connectionType = tokenizedConnection[1];
             if(direction === "N") {
                 if(connectionType == "D") {
-                    northConnection = "D";
+                    northConnection = "<span class=\"door\">D</span>";
+                } else {
+                    northConnection = " ";
                 }
             }
             if(direction === "E") {
                 if(connectionType == "D") {
-                    eastConnection = "D";
+                    eastConnection = "<span class=\"door\">D</span>";
+                } else {
+                    eastConnection = " ";
                 }
             }
             if(direction === "S") {
                 if(connectionType == "D") {
-                    southConnection = "D";
+                    southConnection = "<span class=\"door\">D</span>";
+                } else {
+                    southConnection = " ";
                 }
             }
             if(direction === "W") {
                 if(connectionType == "D") {
-                    westConnection = "D";
+                    westConnection = "<span class=\"door\">D</span>";
+                } else {
+                    westConnection = " ";
                 }
             }
         });
 
-        return `${roomName}${northConnection}┐\n${westConnection}${roomContent}${eastConnection}\n└${southConnection}┘`;
+        return `${roomName}─${northConnection}─┐\n${westConnection}${roomContent}${robotContent}${eastConnection}\n└─${southConnection}─┘`;
     } else {
-        return `   \n   \n   `;
+        return `     \n     \n     `;
     }
 }
 
@@ -643,7 +654,15 @@ function render(roomGrid: gridRoom [][], currentRobot: Robot) {
 
 function drawRobotState(robot: Robot) {
     document.querySelector("#locationText").innerHTML = robot.rooms[robot.location].name;
-    document.querySelector("#holdingText").innerHTML = robot.holding;
+    let contentsPresentation = " ";
+    if(robot.holding === ObjectType.KEY) {
+        contentsPresentation = `<span class="key">${robot.holding.toLocaleUpperCase()}</span>`;
+    } else if(robot.holding === ObjectType.ORB) {
+        contentsPresentation = `<span class="orb">${robot.holding.toLocaleUpperCase()}</span>`;
+    } else {
+        contentsPresentation = robot.holding;
+    }
+    document.querySelector("#holdingText").innerHTML = contentsPresentation;
 }
 
 function drawMap(roomGrid: gridRoom [][]) {

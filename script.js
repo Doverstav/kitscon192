@@ -59,14 +59,16 @@ var Robot = /** @class */ (function () {
             if (connectionType === "D" && _this.holding !== ObjectType.KEY) {
                 var copiedRooms = _this.copyAllRooms();
                 _this.updateRoomConnection(_this.rooms[_this.location].name, roomName, "H", copiedRooms);
-                var nextState = new Robot(_this.holding, copiedRooms, _this.getRoomIndex(roomName));
+                //let nextState = new Robot(this.holding, copiedRooms, this.getRoomIndex(roomName));
+                var nextState = new Robot(_this.holding, copiedRooms, _this.location);
                 _this.addEdge(nextState, 10);
             }
             // If holding key, use key to open door
             if (connectionType === "D" && _this.holding === ObjectType.KEY) {
                 var copiedRooms = _this.copyAllRooms();
                 _this.updateRoomConnection(_this.rooms[_this.location].name, roomName, "H", copiedRooms);
-                var nextState = new Robot(ObjectType.NOTHING, copiedRooms, _this.getRoomIndex(roomName));
+                //let nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.getRoomIndex(roomName));
+                var nextState = new Robot(ObjectType.NOTHING, copiedRooms, _this.location);
                 _this.addEdge(nextState, 1);
             }
         });
@@ -444,19 +446,20 @@ function printRoom(gridRoom) {
     if (gridRoom) {
         var room = gridRoom.room;
         var roomName = room.name;
+        var robotContent = "  ";
         var roomContent = " ";
-        var northConnection_1 = " ";
-        var eastConnection_1 = " ";
-        var southConnection_1 = " ";
-        var westConnection_1 = " ";
+        var northConnection_1 = "\u2500";
+        var eastConnection_1 = "\u2502";
+        var southConnection_1 = "\u2500";
+        var westConnection_1 = "\u2502";
         if (gridRoom.robot) {
-            roomContent = "R";
+            robotContent = "<span class=\"robot\">:)</span>";
         }
-        else if (room.contents === ObjectType.KEY) {
-            roomContent = "K";
+        if (room.contents === ObjectType.KEY) {
+            roomContent = "<span class=\"key\">K</span>";
         }
         else if (room.contents === ObjectType.ORB) {
-            roomContent = "O";
+            roomContent = "<span class=\"orb\">O</span>";
         }
         room.connections.forEach(function (connection) {
             var tokenizedConnection = connection.split(" ");
@@ -464,29 +467,41 @@ function printRoom(gridRoom) {
             var connectionType = tokenizedConnection[1];
             if (direction === "N") {
                 if (connectionType == "D") {
-                    northConnection_1 = "D";
+                    northConnection_1 = "<span class=\"door\">D</span>";
+                }
+                else {
+                    northConnection_1 = " ";
                 }
             }
             if (direction === "E") {
                 if (connectionType == "D") {
-                    eastConnection_1 = "D";
+                    eastConnection_1 = "<span class=\"door\">D</span>";
+                }
+                else {
+                    eastConnection_1 = " ";
                 }
             }
             if (direction === "S") {
                 if (connectionType == "D") {
-                    southConnection_1 = "D";
+                    southConnection_1 = "<span class=\"door\">D</span>";
+                }
+                else {
+                    southConnection_1 = " ";
                 }
             }
             if (direction === "W") {
                 if (connectionType == "D") {
-                    westConnection_1 = "D";
+                    westConnection_1 = "<span class=\"door\">D</span>";
+                }
+                else {
+                    westConnection_1 = " ";
                 }
             }
         });
-        return "" + roomName + northConnection_1 + "\u2510\n" + westConnection_1 + roomContent + eastConnection_1 + "\n\u2514" + southConnection_1 + "\u2518";
+        return roomName + "\u2500" + northConnection_1 + "\u2500\u2510\n" + westConnection_1 + roomContent + robotContent + eastConnection_1 + "\n\u2514\u2500" + southConnection_1 + "\u2500\u2518";
     }
     else {
-        return "   \n   \n   ";
+        return "     \n     \n     ";
     }
 }
 var currentRoom;
@@ -530,7 +545,17 @@ function render(roomGrid, currentRobot) {
 }
 function drawRobotState(robot) {
     document.querySelector("#locationText").innerHTML = robot.rooms[robot.location].name;
-    document.querySelector("#holdingText").innerHTML = robot.holding;
+    var contentsPresentation = " ";
+    if (robot.holding === ObjectType.KEY) {
+        contentsPresentation = "<span class=\"key\">" + robot.holding.toLocaleUpperCase() + "</span>";
+    }
+    else if (robot.holding === ObjectType.ORB) {
+        contentsPresentation = "<span class=\"orb\">" + robot.holding.toLocaleUpperCase() + "</span>";
+    }
+    else {
+        contentsPresentation = robot.holding;
+    }
+    document.querySelector("#holdingText").innerHTML = contentsPresentation;
 }
 function drawMap(roomGrid) {
     // Get map as string
