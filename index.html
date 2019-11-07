@@ -21,7 +21,7 @@
         </div>
         <h3>Information</h3>
         <div>
-            <p>Accepted goals are the following</p>
+            Accepted goals are the following:
             <ul>
                 <li>GET [OBJECT] [ROOM]: Get object from specified room</li>
                 <li>GET [OBJECT]: Get object from any room</li>
@@ -41,7 +41,18 @@
                 <li>O: Orb</li>
                 <li>K: Key</li>
                 <li>R: Robot</li>
-                <li>DD: The path between these rooms is blocked by a door, impeding progress unless you have a key. Can be forced open, but doing this costs more energy.</li>
+                <li>DD: The path between these rooms is blocked by a door, impeding progress unless you have a key. Can be forced open, but doing this costs more energy</li>
+                <li>' ': A blank space between rooms means there is a hallway connecting them, allowing unimpeded access</li>
+            </ul>
+        </div>
+        <div>
+            Action costs:
+            <ul>
+                <li>Pickup object: 0.25</li>
+                <li>Drop object: 0.25</li>
+                <li>Move through hallway: 1</li>
+                <li>Open door with key: 1</li>
+                <li>Force open door: 10</li>
             </ul>
         </div>
     </body>
