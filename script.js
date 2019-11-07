@@ -6,30 +6,9 @@ var SimpleEdge = /** @class */ (function () {
     }
     return SimpleEdge;
 }());
-var Room = /** @class */ (function () {
-    function Room(name, contents, connections) {
-        var _this = this;
-        this.name = name;
-        this.contents = contents;
-        this.connections = [];
-        connections.forEach(function (connection) { return _this.connections.push(new Connection(connection.room, connection.connectionType, connection.direction)); });
-    }
-    Room.prototype.copy = function () {
-        return new Room(this.name, this.contents, this.connections);
-    };
-    Room.prototype.equals = function (otherRoom) {
-        return this.name === otherRoom.name;
-    };
-    return Room;
-}());
-var Connection = /** @class */ (function () {
-    function Connection(room, connectionType, direction) {
-        this.room = room;
-        this.connectionType = connectionType;
-        this.direction = direction;
-    }
-    return Connection;
-}());
+function copyRoom(room) {
+    return { name: room.name, contents: room.contents, connections: room.connections.slice() };
+}
 var ObjectType;
 (function (ObjectType) {
     ObjectType["KEY"] = "Key";
@@ -56,56 +35,59 @@ var MapObject = /** @class */ (function () {
     return MapObject;
 }());
 var Robot = /** @class */ (function () {
-    function Robot(toHold, location) {
+    function Robot(toHold, rooms, location) {
         this.holding = toHold;
+        this.rooms = rooms;
         this.location = location;
         this.edges = [];
     }
     Robot.prototype.moveRobot = function () {
-        // Go to adjacent rooms
         var _this = this;
-        // TODO: NEW IMPLEMENTATION
-        // Create new instances of all rooms
-        // Otherwise (as rooms are passed by reference) updating rooms in one robot will update them for all robots
-        var locationCopy = this.createNewRoomInstances(this.location);
+        var currentLocation = this.rooms[this.location];
         // For each connection
-        locationCopy.connections.forEach(function (connection) {
-            // If hallway, go to next room
-            if (connection.connectionType === ConnectionType.HALLWAY) {
-                var nextState = new Robot(_this.holding, _this.createNewRoomInstances(connection.room));
-                _this.addEdge(nextState, 4);
+        currentLocation.connections.forEach(function (connection) {
+            var tokenizedConnection = connection.split(" ");
+            var direction = tokenizedConnection[0].toLocaleUpperCase();
+            var connectionType = tokenizedConnection[1].toLocaleUpperCase();
+            var roomName = tokenizedConnection[2].toLocaleUpperCase();
+            var destinationRoom = _this.getRoom(roomName);
+            // Go through hallway
+            if (connectionType === "H") {
+                var nextState = new Robot(_this.holding, _this.copyAllRooms(), _this.getRoomIndex(roomName));
+                _this.addEdge(nextState, 1);
             }
-            // If door and no key, force door
-            if (connection.connectionType === ConnectionType.DOOR && _this.holding !== ObjectType.KEY) {
-                var nextState = new Robot(_this.holding, _this.createNewRoomInstances(connection.room));
-                _this.addEdge(nextState, 40);
+            // If not holding key, force open door
+            if (connectionType === "D" && _this.holding !== ObjectType.KEY) {
+                var nextState = new Robot(_this.holding, _this.copyAllRooms(), _this.getRoomIndex(roomName));
+                _this.addEdge(nextState, 10);
             }
-            // If door and holding key, open door
-            if (connection.connectionType === ConnectionType.DOOR && _this.holding === ObjectType.KEY) {
-                var nextState = new Robot(ObjectType.NOTHING, _this.createNewRoomInstances(connection.room));
-                _this.addEdge(nextState, 4);
+            // If holding key, use key to open door
+            if (connectionType === "D" && _this.holding === ObjectType.KEY) {
+                var nextState = new Robot(ObjectType.NOTHING, _this.copyAllRooms(), _this.getRoomIndex(roomName));
+                _this.addEdge(nextState, 1);
             }
         });
-        // If holding object and there is space in room, drop it
-        // TODO: Fix bug where robot drops object in every rom and pollutes the map
-        /*if(this.holding !== ObjectType.NOTHING && locationCopy.contents === ObjectType.NOTHING) {
-            // Drop object
-            let updatedLocation = new Room(locationCopy.name, this.holding, locationCopy.connections);
-            let remadeEverything = this.createNewRoomInstances(updatedLocation);
+        // If not holding object, pick up object
+        if (this.holding === ObjectType.NOTHING && currentLocation.contents !== ObjectType.NOTHING) {
+            // Save room contents
+            var roomContents = currentLocation.contents;
+            // Copy all rooms
+            var copiedRooms = this.copyAllRooms();
+            // Remove contents from room
+            copiedRooms[this.location].contents = ObjectType.NOTHING;
             // Create next state
-            let nextState = new Robot(ObjectType.NOTHING, remadeEverything);
-            this.addEdge(nextState, 1);
-        }*/
-        // If object is in room, pick it up
-        // TODO: This is also bugged, like drop
-        if (this.holding === ObjectType.NOTHING && locationCopy.contents !== ObjectType.NOTHING) {
-            // Save object
-            var objectToPickup = locationCopy.contents;
-            var updatedLocation = new Room(locationCopy.name, ObjectType.NOTHING, locationCopy.connections);
-            var remadeEverything = this.createNewRoomInstances(updatedLocation);
+            var nextState = new Robot(roomContents, copiedRooms, this.location);
+            this.addEdge(nextState, 0.25);
+        }
+        // If holding object, drop object
+        if (this.holding !== ObjectType.NOTHING && currentLocation.contents === ObjectType.NOTHING) {
+            // Copy all rooms
+            var copiedRooms = this.copyAllRooms();
+            // Set contents in location
+            copiedRooms[this.location].contents = this.holding;
             // Create next state
-            var nextState = new Robot(objectToPickup, remadeEverything);
-            this.addEdge(nextState, 1);
+            var nextState = new Robot(ObjectType.NOTHING, copiedRooms, this.location);
+            this.addEdge(nextState, 0.25);
         }
     };
     Robot.prototype.addEdge = function (neighbour, cost) {
@@ -117,58 +99,26 @@ var Robot = /** @class */ (function () {
         }
         return this.edges;
     };
-    // When creating a new copy of a room, make sure that all connection rooms point to that new copy
-    Robot.prototype.updateRoomConnections = function (updatedRoom) {
-        updatedRoom.connections.forEach(function (connection) {
-            connection.room.connections.forEach(function (connectionBack) {
-                if (connectionBack.room.name === updatedRoom.name) {
-                    connectionBack.room = updatedRoom;
-                }
-            });
-        });
-    };
-    // Given a room, create new instances of all rooms in this group
-    Robot.prototype.createNewRoomInstances = function (room) {
-        var _this = this;
-        var initialCopy = room.copy();
-        var roomsToUpdate = [initialCopy];
-        var copiedRooms = [initialCopy];
-        while (roomsToUpdate.length !== 0) {
-            var roomToUpdate = roomsToUpdate.shift();
-            // Make sure all rooms reference this new copy
-            this.updateRoomConnections(roomToUpdate);
-            // For all rooms connecting to this one
-            roomToUpdate.connections.forEach(function (connection) {
-                // If they are not already copied
-                if (!_this.isRoomCopied(copiedRooms, connection.room)) {
-                    var copiedRoom = connection.room.copy();
-                    // Add to list of rooms that should be copied
-                    roomsToUpdate.push(copiedRoom);
-                    // Set it as copied so that we don not do work twice
-                    copiedRooms.push(copiedRoom);
-                }
-            });
-        }
-        return copiedRooms[0];
-    };
-    Robot.prototype.isRoomCopied = function (copiedRooms, room) {
-        for (var i = 0; i < copiedRooms.length; i++) {
-            if (copiedRooms[i].name === room.name) {
-                return true;
+    Robot.prototype.getRoom = function (roomName) {
+        for (var i = 0; i < this.rooms.length; i++) {
+            if (this.rooms[i].name.toLocaleLowerCase() === roomName.toLocaleLowerCase()) {
+                return this.rooms[i];
             }
         }
-        return false;
+        return undefined;
     };
-    Robot.prototype.toString = function () {
-        var stringRepresentation = "";
-        stringRepresentation = stringRepresentation.concat("Name: " + this.location.name + "\nHolding: " + this.holding + "\n");
-        this.location.connections.forEach(function (connection) {
-            stringRepresentation = stringRepresentation.concat("{\n\t" + connection.room.name + "\n\t" + connection.connectionType + "\n\t" + connection.direction + "\n}\n");
-        });
-        this.edges.forEach(function (edge) {
-            stringRepresentation = stringRepresentation.concat(edge.from.location.name + " -" + edge.cost + "-> " + edge.to.location.name + "\n");
-        });
-        return stringRepresentation;
+    Robot.prototype.getRoomIndex = function (roomName) {
+        for (var i = 0; i < this.rooms.length; i++) {
+            if (this.rooms[i].name.toLocaleLowerCase() === roomName.toLocaleLowerCase()) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    Robot.prototype.copyAllRooms = function () {
+        var newList = [];
+        this.rooms.forEach(function (room) { return newList.push(copyRoom(room)); });
+        return newList;
     };
     Robot.prototype.equals = function (toCompare) {
         // Robots are equal of they are in the same room
@@ -176,13 +126,16 @@ var Robot = /** @class */ (function () {
         var locationIsSignificant = true;
         var holdingIsSignificant = true;
         var roomContentsIsSignificant = true;
-        if (toCompare.location) {
-            locationIsSignificant = this.location.name === toCompare.location.name;
+        if (toCompare.location !== undefined) {
+            console.log("comparing location");
+            locationIsSignificant = this.rooms[this.location].name === toCompare.rooms[toCompare.location].name;
         }
-        if (toCompare.location && toCompare.location.contents) {
-            roomContentsIsSignificant = this.location.contents === toCompare.location.contents;
+        if (toCompare.location !== undefined && toCompare.rooms[toCompare.location].contents) {
+            console.log("comparing location contents");
+            roomContentsIsSignificant = this.rooms[this.location].contents === toCompare.rooms[toCompare.location].contents;
         }
         if (toCompare.holding) {
+            console.log("comparing holding");
             holdingIsSignificant = this.holding === toCompare.holding;
         }
         return locationIsSignificant
@@ -256,74 +209,36 @@ function printPath(path) {
     }
     return stringPath;
 }
-var room1 = new Room('a', ObjectType.NOTHING, []);
-var room2 = new Room('b', ObjectType.KEY, []);
-var room3 = new Room('c', ObjectType.NOTHING, []);
-var room4 = new Room('d', ObjectType.ORB, []);
-var room5 = new Room('e', ObjectType.NOTHING, []);
-var room6 = new Room('f', ObjectType.ORB, []);
-room1.connections = [
-    {
-        room: room2,
-        connectionType: ConnectionType.DOOR,
-        direction: Direction.EAST
-    }
-];
-room2.connections = [
-    {
-        room: room1,
-        connectionType: ConnectionType.DOOR,
-        direction: Direction.WEST
-    },
-    {
-        room: room3,
-        connectionType: ConnectionType.DOOR,
-        direction: Direction.NORTH
-    },
-    {
-        room: room4,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.SOUTH
-    },
-    {
-        room: room5,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.EAST
-    }
-];
-room3.connections = [
-    {
-        room: room2,
-        connectionType: ConnectionType.DOOR,
-        direction: Direction.SOUTH
-    }
-];
-room4.connections = [
-    {
-        room: room2,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.NORTH
-    }
-];
-room5.connections = [
-    {
-        room: room2,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.WEST
-    },
-    {
-        room: room6,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.EAST
-    }
-];
-room6.connections = [
-    {
-        room: room5,
-        connectionType: ConnectionType.HALLWAY,
-        direction: Direction.WEST
-    }
-];
+var room1 = {
+    name: 'a',
+    contents: ObjectType.NOTHING,
+    connections: ["E D B"]
+};
+var room2 = {
+    name: 'b',
+    contents: ObjectType.KEY,
+    connections: ["W D A", "N D C", "E H E", "S H D"]
+};
+var room3 = {
+    name: 'c',
+    contents: ObjectType.NOTHING,
+    connections: ["S D B"]
+};
+var room4 = {
+    name: 'd',
+    contents: ObjectType.ORB,
+    connections: ["N H B"]
+};
+var room5 = {
+    name: 'e',
+    contents: ObjectType.NOTHING,
+    connections: ["W H B", "E H F"]
+};
+var room6 = {
+    name: 'f',
+    contents: ObjectType.ORB,
+    connections: ["W H E"]
+};
 function createRoomGrid(initialRoom) {
     // Keep track of max/min indexes so we can normalize them later
     var smallestX = 0;
@@ -331,8 +246,8 @@ function createRoomGrid(initialRoom) {
     var smallestY = 0;
     var largestY = 0;
     // Set starting room as origo
-    var processedRooms = [{ x: 0, y: 0, room: initialRoom.location, robot: true }];
-    var roomsToProcess = [{ x: 0, y: 0, room: initialRoom.location, robot: true }];
+    var processedRooms = [{ x: 0, y: 0, room: initialRoom.rooms[initialRoom.location], robot: true }];
+    var roomsToProcess = [{ x: 0, y: 0, room: initialRoom.rooms[initialRoom.location], robot: true }];
     var _loop_2 = function () {
         // Get next room to process
         var roomToProcess = roomsToProcess.shift();
@@ -341,12 +256,22 @@ function createRoomGrid(initialRoom) {
         // For each connection
         connections.forEach(function (connection) {
             // Check that we have not already processed this room
-            if (!isRoomProcessed(processedRooms, connection.room)) {
+            var tokenizedConnection = connection.split(" ");
+            var direction = tokenizedConnection[0];
+            var connectionType = tokenizedConnection[1];
+            var roomName = tokenizedConnection[2];
+            var connectingRoom = initialRoom.getRoom(roomName);
+            console.log(tokenizedConnection);
+            console.log(direction);
+            console.log(connectionType);
+            console.log(roomName);
+            console.log(connectingRoom);
+            if (!isRoomProcessed(processedRooms, connectingRoom)) {
                 // Add to processed rooms
                 // Update smallest/largest depending on direction
-                if (connection.direction === Direction.NORTH) {
+                if (direction === "N") {
                     // Create processed room
-                    var processedRoom = { x: roomToProcess.x, y: roomToProcess.y - 1, room: connection.room, robot: false };
+                    var processedRoom = { x: roomToProcess.x, y: roomToProcess.y - 1, room: connectingRoom, robot: false };
                     // Update smallest y
                     if (smallestY > roomToProcess.y - 1) {
                         smallestY = roomToProcess.y - 1;
@@ -355,9 +280,9 @@ function createRoomGrid(initialRoom) {
                     processedRooms.push(processedRoom);
                     roomsToProcess.push(processedRoom);
                 }
-                if (connection.direction === Direction.EAST) {
+                if (direction === "E") {
                     // Create processed room
-                    var processedRoom = { x: roomToProcess.x + 1, y: roomToProcess.y, room: connection.room, robot: false };
+                    var processedRoom = { x: roomToProcess.x + 1, y: roomToProcess.y, room: connectingRoom, robot: false };
                     // Update smallest y
                     if (largestX < roomToProcess.x + 1) {
                         largestX = roomToProcess.x + 1;
@@ -366,9 +291,9 @@ function createRoomGrid(initialRoom) {
                     processedRooms.push(processedRoom);
                     roomsToProcess.push(processedRoom);
                 }
-                if (connection.direction === Direction.SOUTH) {
+                if (direction === "S") {
                     // Create processed room
-                    var processedRoom = { x: roomToProcess.x, y: roomToProcess.y + 1, room: connection.room, robot: false };
+                    var processedRoom = { x: roomToProcess.x, y: roomToProcess.y + 1, room: connectingRoom, robot: false };
                     // Update smallest y
                     if (largestY < roomToProcess.y + 1) {
                         largestY = roomToProcess.y + 1;
@@ -377,9 +302,9 @@ function createRoomGrid(initialRoom) {
                     processedRooms.push(processedRoom);
                     roomsToProcess.push(processedRoom);
                 }
-                if (connection.direction === Direction.WEST) {
+                if (direction === "W") {
                     // Create processed room
-                    var processedRoom = { x: roomToProcess.x - 1, y: roomToProcess.y, room: connection.room, robot: false };
+                    var processedRoom = { x: roomToProcess.x - 1, y: roomToProcess.y, room: connectingRoom, robot: false };
                     // Update smallest y
                     if (smallestX > roomToProcess.x - 1) {
                         smallestX = roomToProcess.x - 1;
@@ -480,23 +405,26 @@ function printRoom(gridRoom) {
             roomContent = "O";
         }
         room.connections.forEach(function (connection) {
-            if (connection.direction === Direction.NORTH) {
-                if (connection.connectionType == ConnectionType.DOOR) {
+            var tokenizedConnection = connection.split(" ");
+            var direction = tokenizedConnection[0];
+            var connectionType = tokenizedConnection[1];
+            if (direction === "N") {
+                if (connectionType == "D") {
                     northConnection_1 = "D";
                 }
             }
-            if (connection.direction === Direction.EAST) {
-                if (connection.connectionType == ConnectionType.DOOR) {
+            if (direction === "E") {
+                if (connectionType == "D") {
                     eastConnection_1 = "D";
                 }
             }
-            if (connection.direction === Direction.SOUTH) {
-                if (connection.connectionType == ConnectionType.DOOR) {
+            if (direction === "S") {
+                if (connectionType == "D") {
                     southConnection_1 = "D";
                 }
             }
-            if (connection.direction === Direction.WEST) {
-                if (connection.connectionType == ConnectionType.DOOR) {
+            if (direction === "W") {
+                if (connectionType == "D") {
                     westConnection_1 = "D";
                 }
             }
@@ -510,36 +438,15 @@ function printRoom(gridRoom) {
 var currentRoom;
 var roomGrid;
 function init() {
-    console.log("I am init!");
     // Create map
     currentRoom = createMap();
     // Create roomgrid
     roomGrid = createRoomGrid(currentRoom);
     // Paint map
     render(roomGrid, currentRoom);
-    /* let goalRobot = new Robot(undefined, new Room('e', ObjectType.ORB, []));
-
-    let pathToGoal = shortestPath(startRobot, goalRobot);
-    let goalBack = new Robot(undefined, room3);
-    let pathBack = shortestPath(pathToGoal[pathToGoal.length - 1].to, goalBack);
-    let thirdGoal = new Robot(undefined, room1);
-    let thirdPath = shortestPath(pathBack[pathBack.length - 1].to, thirdGoal);
-    console.log(pathToGoal);
-    console.log(pathBack);
-    console.log(thirdPath);
-
-    drawRobotPath(pathToGoal.slice(), testGrid);
-
-    setTimeout(() => {
-        drawRobotPath(pathBack.slice(), testGrid);
-    }, 10000);
-
-    setTimeout(() => {
-        drawRobotPath(thirdPath.slice(), testGrid);
-    }, 15000); */
 }
 function createMap() {
-    return new Robot(ObjectType.NOTHING, room1);
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
 }
 function drawRobotPath(path, roomGrid) {
     document.querySelector("#goalFeedback").innerHTML = "Executing";
@@ -547,7 +454,6 @@ function drawRobotPath(path, roomGrid) {
         setTimeout(function () {
             var pathFragment = path.shift();
             var nextMapState = pathFragment.to;
-            //updateRoomGrid(roomGrid, nextMapState.location);
             render(createRoomGrid(nextMapState), nextMapState);
             drawRobotPath(path, roomGrid);
         }, 1000);
@@ -562,7 +468,7 @@ function render(roomGrid, currentRobot) {
     drawMap(roomGrid);
 }
 function drawRobotState(robot) {
-    document.querySelector("#locationText").innerHTML = robot.location.name;
+    document.querySelector("#locationText").innerHTML = robot.rooms[robot.location].name;
     document.querySelector("#holdingText").innerHTML = robot.holding;
 }
 function drawMap(roomGrid) {
@@ -582,21 +488,23 @@ function parseGoal() {
         var dropObject = tokens[0];
         var targetRoomName = tokens[1];
         var targetRoom = undefined;
+        var targetRoomIndex = undefined;
         if (targetRoomName) {
-            targetRoom = new Room(targetRoomName, stringToObjectType(dropObject), []);
+            targetRoom = [{ name: targetRoomName, contents: stringToObjectType(dropObject), connections: [] }];
+            targetRoomIndex = 0;
         }
-        var goalRobot = new Robot(ObjectType.NOTHING, targetRoom);
+        var goalRobot = new Robot(ObjectType.NOTHING, targetRoom, targetRoomIndex);
         executeGoal(goalRobot);
     }
     else if (command === "goto") {
-        // Goto some room, possibly holding and object
+        // Goto some room, possibly holding an object
         var gotoRoom = tokens[0];
         var goalObject = tokens[1];
         var objectToHold = undefined;
         if (goalObject) {
             objectToHold = stringToObjectType(goalObject);
         }
-        var goalRobot = new Robot(objectToHold, new Room(gotoRoom, undefined, []));
+        var goalRobot = new Robot(objectToHold, [{ name: gotoRoom, contents: undefined, connections: undefined }], 0);
         executeGoal(goalRobot);
     }
     else if (command === "get") {
@@ -604,10 +512,12 @@ function parseGoal() {
         var fetchObject = tokens[0];
         var targetRoomName = tokens[1];
         var targetRoom = undefined;
+        var targetRoomIndex = undefined;
         if (targetRoomName) {
-            targetRoom = new Room(targetRoomName, undefined, []);
+            targetRoom = [{ name: targetRoomName, contents: undefined, connections: [] }];
+            targetRoomIndex = 0;
         }
-        var goalRobot = new Robot(stringToObjectType(fetchObject), targetRoom);
+        var goalRobot = new Robot(stringToObjectType(fetchObject), targetRoom, targetRoomIndex);
         executeGoal(goalRobot);
     }
     else {
