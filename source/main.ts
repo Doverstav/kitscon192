@@ -535,6 +535,15 @@ let currentRoom : Robot;
 let roomGrid:  gridRoom [][];
 
 function init() {
+    // Parse goal when enter is pressed
+    document.addEventListener('keydown', (event) => {
+        let keyName = event.key;
+
+        if(keyName === 'Enter') {
+            parseGoal();
+        }
+    });
+
     // Create map
     currentRoom = createMap();
     // Create roomgrid

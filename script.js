@@ -433,6 +433,13 @@ function printRoom(gridRoom) {
 var currentRoom;
 var roomGrid;
 function init() {
+    // Parse goal when enter is pressed
+    document.addEventListener('keydown', function (event) {
+        var keyName = event.key;
+        if (keyName === 'Enter') {
+            parseGoal();
+        }
+    });
     // Create map
     currentRoom = createMap();
     // Create roomgrid
