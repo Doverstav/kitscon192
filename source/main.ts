@@ -355,42 +355,6 @@ function printPath(path: Edge []) {
     return stringPath;
 }
 
-let room1: StringRoom = {
-    name: 'a',
-    contents: ObjectType.NOTHING,
-    connections: ["E D B"]
-}
-
-let room2: StringRoom = {
-    name: 'b',
-    contents: ObjectType.KEY,
-    connections: ["W D A", "N D C", "E H E", "S H D"]
-}
-
-let room3: StringRoom = {
-    name: 'c',
-    contents: ObjectType.NOTHING,
-    connections: ["S D B"]
-}
-
-let room4: StringRoom = {
-    name: 'd',
-    contents: ObjectType.ORB,
-    connections: ["N H B"]
-}
-
-let room5: StringRoom = {
-    name: 'e',
-    contents: ObjectType.NOTHING,
-    connections: ["W H B", "E H F"]
-}
-
-let room6: StringRoom = {
-    name: 'f',
-    contents: ObjectType.ORB,
-    connections: ["W H E"]
-}
-
 function createRoomGrid(initialRoom: Robot) {
     // Keep track of max/min indexes so we can normalize them later
     let smallestX = 0;
@@ -629,8 +593,212 @@ function init() {
 }
 
 function createMap() {
-    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
+    // This map shows that the robot will take the long way around to 
+    //get a key and open a door for easier passage back
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["E D J", "S H B"]
+    }
+
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["N H A", "S H C"]
+    }
+
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B", "E H D"]
+    }
+
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.NOTHING,
+        connections: ["W H C", "E H E"]
+    }
+
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W H D", "E H F"]
+    }
+
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "N H G"]
+    }
+
+    let room7: StringRoom = {
+        name: 'g',
+        contents: ObjectType.NOTHING,
+        connections: ["S H F", "N H H"]
+    }
+
+    let room8: StringRoom = {
+        name: 'h',
+        contents: ObjectType.NOTHING,
+        connections: ["S H G", "W H I"]
+    }
+
+    let room9: StringRoom = {
+        name: 'i',
+        contents: ObjectType.ORB,
+        connections: ["E H H", "W H J"]
+    }
+
+    let room10: StringRoom = {
+        name: 'j',
+        contents: ObjectType.KEY,
+        connections: ["W D A", "E H I"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10], 0);
 }
+
+/* function createMap() {
+    // This is the original testmap
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["E D B"]
+    }
+    
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.KEY,
+        connections: ["W D A", "N D C", "E H E", "S H D"]
+    }
+    
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.NOTHING,
+        connections: ["S D B"]
+    }
+    
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.ORB,
+        connections: ["N H B"]
+    }
+    
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W H B", "E H F"]
+    }
+    
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.ORB,
+        connections: ["W H E"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
+} */
+
+/* function createMap() {
+    // This map shows that the robot will fetch a key to open a door
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["E D B"]
+    }
+
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["W D A", "N D C", "E H E", "S H D"]
+    }
+
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.ORB,
+        connections: ["S D B"]
+    }
+
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B"]
+    }
+
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W H B", "E H F"]
+    }
+
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.KEY,
+        connections: ["W H E"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
+} */
+
+/* function createMap() {
+    // This map shows that the robot will NOT fetch a key to open a
+    // door if the key is too far away
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["E D B"]
+    }
+    
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["W D A", "N D C", "E H E", "S H D"]
+    }
+    
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.ORB,
+        connections: ["S D B"]
+    }
+    
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B"]
+    }
+    
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W H B", "E H F"]
+    }
+    
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "E H G"]
+    }
+    
+    let room7: StringRoom = {
+        name: 'g',
+        contents: ObjectType.NOTHING,
+        connections: ["W H F", "E H H"]
+    }
+    
+    let room8: StringRoom = {
+        name: 'h',
+        contents: ObjectType.NOTHING,
+        connections: ["W H G", "E H I"]
+    }
+    
+    let room9: StringRoom = {
+        name: 'i',
+        contents: ObjectType.KEY,
+        connections: ["W H H"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9], 0);
+} */
 
 function drawRobotPath(path: Edge [], roomGrid: gridRoom [][]) {
     document.querySelector("#goalFeedback").innerHTML = "Executing";
