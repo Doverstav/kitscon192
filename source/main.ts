@@ -310,8 +310,8 @@ function compareWorldState(worldA: Robot, worldB: Robot) {
         return false;
     }
     // Compare holding
-    if(worldA.location !== worldB.location) {
-
+    if(worldA.holding !== worldB.holding) {
+        return false;
     }
     // Compare every room
     for(let i = 0; i < worldA.rooms.length; i++) {
@@ -323,7 +323,7 @@ function compareWorldState(worldA: Robot, worldB: Robot) {
         }
         
         for(let j = 0; j < worldA.rooms[i].connections.length; j++) {
-            if(worldA.rooms[i].connections[i] !== worldB.rooms[i].connections[i]) {
+            if(worldA.rooms[i].connections[j] !== worldB.rooms[i].connections[j]) {
                 return false;
             }
         }
