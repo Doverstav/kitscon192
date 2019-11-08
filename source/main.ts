@@ -593,6 +593,83 @@ function init() {
 }
 
 function createMap() {
+    // Default map
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["S H B"]
+    }
+
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["N H A", "S H C", "E H D"]
+    }
+
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B"]
+    }
+
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.KEY,
+        connections: ["W H B", "E D E"]
+    }
+
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W D D", "N H F", "E H I", "S D H"]
+    }
+
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.NOTHING,
+        connections: ["S H E", "N H G"]
+    }
+
+    let room7: StringRoom = {
+        name: 'g',
+        contents: ObjectType.ORB,
+        connections: ["S H F"]
+    }
+
+    let room8: StringRoom = {
+        name: 'h',
+        contents: ObjectType.ORB,
+        connections: ["N D E"]
+    }
+
+    let room9: StringRoom = {
+        name: 'i',
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "E H J"]
+    }
+
+    let room10: StringRoom = {
+        name: 'j',
+        contents: ObjectType.NOTHING,
+        connections: ["W H I", "N H K", "E D L"]
+    }
+
+    let room11: StringRoom = {
+        name: 'k',
+        contents: ObjectType.KEY,
+        connections: ["S H J"]
+    }
+
+    let room12: StringRoom = {
+        name: 'l',
+        contents: ObjectType.ORB,
+        connections: ["W D J"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10, room11, room12], 0);
+}
+
+/* function createMap() {
     // This map shows that the robot will take the long way around to 
     //get a key and open a door for easier passage back
     let room1: StringRoom = {
@@ -656,7 +733,7 @@ function createMap() {
     }
 
     return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10], 0);
-}
+} */
 
 /* function createMap() {
     // This is the original testmap

@@ -232,7 +232,8 @@ function compareWorldState(worldA, worldB) {
         return false;
     }
     // Compare holding
-    if (worldA.location !== worldB.location) {
+    if (worldA.holding !== worldB.holding) {
+        return false;
     }
     // Compare every room
     for (var i = 0; i < worldA.rooms.length; i++) {
@@ -243,7 +244,7 @@ function compareWorldState(worldA, worldB) {
             return false;
         }
         for (var j = 0; j < worldA.rooms[i].connections.length; j++) {
-            if (worldA.rooms[i].connections[i] !== worldB.rooms[i].connections[i]) {
+            if (worldA.rooms[i].connections[j] !== worldB.rooms[i].connections[j]) {
                 return false;
             }
         }
@@ -492,59 +493,136 @@ function init() {
     render(roomGrid, currentRoom);
 }
 function createMap() {
+    // Default map
     var room1 = {
         name: 'a',
         contents: ObjectType.NOTHING,
-        connections: ["E D J", "S H B"]
+        connections: ["S H B"]
     };
     var room2 = {
         name: 'b',
         contents: ObjectType.NOTHING,
-        connections: ["N H A", "S H C"]
+        connections: ["N H A", "S H C", "E H D"]
     };
     var room3 = {
         name: 'c',
         contents: ObjectType.NOTHING,
-        connections: ["N H B", "E H D"]
+        connections: ["N H B"]
     };
     var room4 = {
         name: 'd',
-        contents: ObjectType.NOTHING,
-        connections: ["W H C", "E H E"]
+        contents: ObjectType.KEY,
+        connections: ["W H B", "E D E"]
     };
     var room5 = {
         name: 'e',
         contents: ObjectType.NOTHING,
-        connections: ["W H D", "E H F"]
+        connections: ["W D D", "N H F", "E H I", "S D H"]
     };
     var room6 = {
         name: 'f',
         contents: ObjectType.NOTHING,
-        connections: ["W H E", "N H G"]
+        connections: ["S H E", "N H G"]
     };
     var room7 = {
         name: 'g',
-        contents: ObjectType.NOTHING,
-        connections: ["S H F", "N H H"]
+        contents: ObjectType.ORB,
+        connections: ["S H F"]
     };
     var room8 = {
         name: 'h',
-        contents: ObjectType.NOTHING,
-        connections: ["S H G", "W H I"]
+        contents: ObjectType.ORB,
+        connections: ["N D E"]
     };
     var room9 = {
         name: 'i',
-        contents: ObjectType.ORB,
-        connections: ["E H H", "W H J"]
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "E H J"]
     };
     var room10 = {
         name: 'j',
-        contents: ObjectType.KEY,
-        connections: ["W D A", "E H I"]
+        contents: ObjectType.NOTHING,
+        connections: ["W H I", "N H K", "E D L"]
     };
-    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10], 0);
+    var room11 = {
+        name: 'k',
+        contents: ObjectType.KEY,
+        connections: ["S H J"]
+    };
+    var room12 = {
+        name: 'l',
+        contents: ObjectType.ORB,
+        connections: ["W D J"]
+    };
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10, room11, room12], 0);
 }
 /* function createMap() {
+    // This map shows that the robot will take the long way around to
+    //get a key and open a door for easier passage back
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["E D J", "S H B"]
+    }
+
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["N H A", "S H C"]
+    }
+
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B", "E H D"]
+    }
+
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.NOTHING,
+        connections: ["W H C", "E H E"]
+    }
+
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["W H D", "E H F"]
+    }
+
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "N H G"]
+    }
+
+    let room7: StringRoom = {
+        name: 'g',
+        contents: ObjectType.NOTHING,
+        connections: ["S H F", "N H H"]
+    }
+
+    let room8: StringRoom = {
+        name: 'h',
+        contents: ObjectType.NOTHING,
+        connections: ["S H G", "W H I"]
+    }
+
+    let room9: StringRoom = {
+        name: 'i',
+        contents: ObjectType.ORB,
+        connections: ["E H H", "W H J"]
+    }
+
+    let room10: StringRoom = {
+        name: 'j',
+        contents: ObjectType.KEY,
+        connections: ["W D A", "E H I"]
+    }
+
+    return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9, room10], 0);
+} */
+/* function createMap() {
+    // This is the original testmap
     let room1: StringRoom = {
         name: 'a',
         contents: ObjectType.NOTHING,
@@ -584,7 +662,7 @@ function createMap() {
     return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
 } */
 /* function createMap() {
-
+    // This map shows that the robot will fetch a key to open a door
     let room1: StringRoom = {
         name: 'a',
         contents: ObjectType.NOTHING,
@@ -624,6 +702,8 @@ function createMap() {
     return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6], 0);
 } */
 /* function createMap() {
+    // This map shows that the robot will NOT fetch a key to open a
+    // door if the key is too far away
     let room1: StringRoom = {
         name: 'a',
         contents: ObjectType.NOTHING,
