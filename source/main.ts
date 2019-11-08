@@ -877,6 +877,183 @@ function createMap() {
     return new Robot(ObjectType.NOTHING, [room1, room2, room3, room4, room5, room6, room7, room8, room9], 0);
 } */
 
+/* function createMap() {
+    // This map is too large and busy to be useful
+    let room1: StringRoom = {
+        name: 'a',
+        contents: ObjectType.NOTHING,
+        connections: ["N H B", "S H C", "E H D"]
+    }
+    
+    let room2: StringRoom = {
+        name: 'b',
+        contents: ObjectType.NOTHING,
+        connections: ["S H A"]
+    }
+    
+    let room3: StringRoom = {
+        name: 'c',
+        contents: ObjectType.NOTHING,
+        connections: ["N H A"]
+    }
+    
+    let room4: StringRoom = {
+        name: 'd',
+        contents: ObjectType.NOTHING,
+        connections: ["W H A", "N H E", "E H M", "S H S"]
+    }
+    
+    let room5: StringRoom = {
+        name: 'e',
+        contents: ObjectType.NOTHING,
+        connections: ["S H D", "N D L", "E H F"]
+    }
+    
+    let room6: StringRoom = {
+        name: 'f',
+        contents: ObjectType.NOTHING,
+        connections: ["W H E", "N H G"]
+    }
+    
+    let room7: StringRoom = {
+        name: 'g',
+        contents: ObjectType.NOTHING,
+        connections: ["S H F", "N H H"]
+    }
+    
+    let room8: StringRoom = {
+        name: 'h',
+        contents: ObjectType.NOTHING,
+        connections: ["S H G", "E H Z"]
+    }
+    
+    let room8a: StringRoom = {
+        name: 'z',
+        contents: ObjectType.NOTHING,
+        connections: ["W H H", "N H !"]
+    }
+    
+    let room8b: StringRoom = {
+        name: '!',
+        contents: ObjectType.NOTHING,
+        connections: ["S H Z", "W H I"]
+    }
+    
+    let room9: StringRoom = {
+        name: 'i',
+        contents: ObjectType.NOTHING,
+        connections: ["E H !", "W H J"]
+    }
+    
+    let room10: StringRoom = {
+        name: 'j',
+        contents: ObjectType.NOTHING,
+        connections: ["E H I", "S H K"]
+    }
+    
+    let room11: StringRoom = {
+        name: 'k',
+        contents: ObjectType.ORB,
+        connections: ["N H J", "S H L"]
+    }
+    
+    let room12: StringRoom = {
+        name: 'l',
+        contents: ObjectType.KEY,
+        connections: ["N H K", "S D E"]
+    }
+    
+    let room13: StringRoom = {
+        name: 'm',
+        contents: ObjectType.NOTHING,
+        connections: ["W H D", "E H N"]
+    }
+    
+    let room14: StringRoom = {
+        name: 'n',
+        contents: ObjectType.NOTHING,
+        connections: ["W H M", "N D R", "E H O"]
+    }
+    
+    let room15: StringRoom = {
+        name: 'o',
+        contents: ObjectType.NOTHING,
+        connections: ["W H N", "E H P"]
+    }
+    
+    let room16: StringRoom = {
+        name: 'p',
+        contents: ObjectType.NOTHING,
+        connections: ["W H O", "N H Q"]
+    }
+    
+    let room17: StringRoom = {
+        name: 'q',
+        contents: ObjectType.KEY,
+        connections: ["S H P"]
+    }
+    
+    let room18: StringRoom = {
+        name: 'r',
+        contents: ObjectType.ORB,
+        connections: ["S D N"]
+    }
+    
+    let room19: StringRoom = {
+        name: 's',
+        contents: ObjectType.NOTHING,
+        connections: ["N H D", "S D Y", "E H T"]
+    }
+    
+    let room20: StringRoom = {
+        name: 't',
+        contents: ObjectType.NOTHING,
+        connections: ["W H S", "E H U"]
+    }
+    
+    let room21: StringRoom = {
+        name: 'u',
+        contents: ObjectType.NOTHING,
+        connections: ["W H T", "E H V"]
+    }
+    
+    let room22: StringRoom = {
+        name: 'v',
+        contents: ObjectType.NOTHING,
+        connections: ["W H U", "S H W"]
+    }
+    
+    let room23: StringRoom = {
+        name: 'w',
+        contents: ObjectType.NOTHING,
+        connections: ["N H V", "W H X"]
+    }
+    
+    let room24: StringRoom = {
+        name: 'x',
+        contents: ObjectType.KEY,
+        connections: ["E H W"]
+    }
+    
+    let room25: StringRoom = {
+        name: 'y',
+        contents: ObjectType.ORB,
+        connections: ["N D S"]
+    }
+    
+    return new Robot(
+        ObjectType.NOTHING, 
+        [
+            room1, room2, room3, room4, room5, room6, 
+            room7, room8, room8a, room8b, room9, room10, 
+            room11, room12, room13, room14, room15, room16, 
+            room17, room18, room19, room20, room21, room22, 
+            room23, room24, room25
+        ],
+        0
+    );
+} */
+
 function drawRobotPath(path: Edge [], roomGrid: gridRoom [][]) {
     document.querySelector("#goalFeedback").innerHTML = "Executing";
     if(path.length !== 0) {
